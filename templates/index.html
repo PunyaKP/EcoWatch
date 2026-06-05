@@ -1,0 +1,3157 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8"/>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>EcoWatch – Environmental Intelligence</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+
+ --bg:#0d1117;--panel:#131a22;--border:rgba(255,255,255,.07);
+
+ --green:#2ecc71;--green-dim:#1a7a44;--red:#ff4d4d;--orange:#ff8c42;
+
+ --yellow:#f5c518;--purple:#9b59f7;--blue:#3b82f6;--teal:#00e5c0;
+
+ --text:#e8f0ea;--muted:#6b7f72;
+
+ --font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;
+
+}
+
+html{font-size:14px}
+
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);display:flex;height:100vh;overflow:hidden}
+
+a{color:inherit;text-decoration:none}
+
+button{cursor:pointer;border:none;background:none;font-family:inherit;color:inherit}
+
+select{font-family:inherit}
+
+::-webkit-scrollbar{width:4px}
+
+::-webkit-scrollbar-thumb{background:var(--green-dim);border-radius:2px}
+
+ 
+
+/* SIDEBAR */
+
+.sidebar{width:220px;min-width:220px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:0 0 16px;overflow-y:auto}
+
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:22px 20px 18px;border-bottom:1px solid var(--border)}
+
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#1a7a44,#2ecc71);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+
+.logo-text strong{font-family:var(--font-head);font-size:1.15rem;color:#fff}
+
+.logo-text small{font-size:.72rem;color:var(--muted);display:block}
+
+.sidebar-nav{flex:1;padding:12px 10px}
+
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;font-size:.88rem;font-weight:500;color:var(--muted);transition:all .2s;margin-bottom:2px}
+
+.nav-item:hover{background:rgba(46,204,113,.07);color:var(--text)}
+
+.nav-item.active{background:linear-gradient(90deg,rgba(46,204,113,.18),rgba(46,204,113,.06));color:var(--green);border-left:3px solid var(--green);margin-left:-3px}
+
+.nav-item svg{width:18px;height:18px;flex-shrink:0}
+
+.sidebar-impact{margin:8px 12px 0;background:linear-gradient(135deg,rgba(46,204,113,.12),rgba(46,204,113,.04));border:1px solid rgba(46,204,113,.2);border-radius:12px;padding:14px;font-size:.82rem}
+
+.sidebar-impact .impact-title{font-weight:600;color:var(--text);margin-bottom:6px}
+
+.sidebar-impact p{color:var(--muted);line-height:1.5}
+
+.impact-kg{color:var(--green);font-weight:700;font-size:.95rem}
+
+.impact-btn{margin-top:10px;width:100%;padding:7px;background:rgba(46,204,113,.15);border:1px solid rgba(46,204,113,.3);border-radius:8px;font-size:.8rem;color:var(--green);font-weight:600}
+
+.sidebar-darkmode{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 0;font-size:.82rem;color:var(--muted)}
+
+.toggle{width:36px;height:20px;background:var(--green);border-radius:10px;position:relative}
+
+.toggle::after{content:'';position:absolute;right:3px;top:3px;width:14px;height:14px;background:#fff;border-radius:50%}
+
+ 
+
+/* MAIN */
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+.topbar{height:60px;min-height:60px;display:flex;align-items:center;padding:0 24px;gap:16px;border-bottom:1px solid var(--border);background:var(--panel)}
+
+.search{flex:1;max-width:420px;display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:0 14px;height:36px;color:var(--muted);font-size:.85rem}
+
+.search input{background:none;border:none;outline:none;flex:1;color:var(--text);font-family:var(--font-body);font-size:.85rem}
+
+.search input::placeholder{color:var(--muted)}
+
+.search-kbd{background:rgba(255,255,255,.06);border-radius:4px;padding:1px 5px;font-size:.72rem;color:var(--muted)}
+
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+
+.icon-btn{width:36px;height:36px;border-radius:9px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);position:relative}
+
+.dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;border:1.5px solid var(--panel)}
+
+.dot.green{background:var(--green)}.dot.blue{background:var(--blue)}
+
+.user-chip{display:flex;align-items:center;gap:9px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:5px 10px 5px 5px}
+
+.user-avatar{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#2ecc71,#0d8f4f);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:#fff}
+
+.user-chip .user-info strong{display:block;font-size:.82rem;font-weight:600}
+
+.user-chip .user-info small{font-size:.7rem;color:var(--muted)}
+
+ 
+
+/* CONTENT */
+
+.content{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:18px}
+
+.top-row{display:grid;grid-template-columns:1fr 300px;gap:16px;min-height:220px}
+
+ 
+
+/* HERO */
+
+.hero{border-radius:16px;overflow:hidden;position:relative;background:#061a0e;display:flex;align-items:center;padding:28px 36px}
+
+.hero-bg{position:absolute;inset:0;background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1400&q=80');background-size:cover;background-position:center;opacity:.42;filter:saturate(1.5) brightness(.85)}
+
+.hero::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,26,14,.93) 0%,rgba(6,26,14,.68) 55%,rgba(6,26,14,.15) 100%);z-index:1}
+
+.hero-globe{position:absolute;right:-10px;top:50%;transform:translateY(-50%);width:255px;height:255px;z-index:2}
+
+.hero-globe img{width:100%;height:100%;object-fit:cover;border-radius:50%;filter:drop-shadow(0 0 50px rgba(46,204,113,.75)) saturate(1.4) brightness(1.1);animation:earthFloat 6s ease-in-out infinite}
+
+.hero-globe::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:1.5px solid rgba(46,204,113,.25);animation:glowPulse 3s ease-in-out infinite}
+
+@keyframes earthFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+@keyframes glowPulse{0%,100%{box-shadow:0 0 40px rgba(46,204,113,.2)}50%{box-shadow:0 0 60px rgba(46,204,113,.4)}}
+
+.hero-content{position:relative;z-index:3}
+
+.hero-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(46,204,113,.15);border:1px solid rgba(46,204,113,.3);border-radius:20px;padding:4px 12px;font-size:.78rem;color:var(--green);margin-bottom:14px}
+
+.hero h1{font-family:var(--font-head);font-size:2.1rem;font-weight:800;line-height:1.1;margin-bottom:4px}
+
+.hero h1 span{color:var(--green)}
+
+.hero-sub{font-size:.82rem;color:var(--muted);margin-bottom:22px;letter-spacing:.05em}
+
+.hero-btns{display:flex;gap:10px;flex-wrap:wrap}
+
+.btn-primary{display:flex;align-items:center;gap:7px;background:var(--green);color:#0a1f12;border-radius:9px;padding:9px 18px;font-weight:700;font-size:.85rem;transition:all .2s}
+
+.btn-primary:hover{background:#27ae60;transform:translateY(-1px)}
+
+.btn-outline{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--text);border-radius:9px;padding:9px 18px;font-weight:600;font-size:.85rem;transition:all .2s}
+
+ 
+
+/* AQ CARD */
+
+.aq-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column}
+
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+
+.aq-card h3{font-family:var(--font-head);font-size:1rem;font-weight:700}
+
+.aq-location{font-size:.77rem;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:4px}
+
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
+
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+
+.aq-gauge{flex:1;display:flex;align-items:center;justify-content:center;position:relative;padding:8px 0}
+
+.gauge-svg{width:120px;height:80px;overflow:visible}
+
+.gauge-value{position:absolute;text-align:center;bottom:24px}
+
+.gauge-value .val{font-family:var(--font-head);font-size:2rem;font-weight:800;color:#fff}
+
+.gauge-value .label{font-size:.8rem;color:var(--green);font-weight:600}
+
+.aq-meta{text-align:center;font-size:.72rem;color:var(--muted)}
+
+ 
+
+/* STAT CARDS */
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 18px;position:relative;overflow:hidden;transition:transform .2s}
+
+.stat-card:hover{transform:translateY(-2px)}
+
+.icon-wrap{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+
+.stat-label{font-size:.78rem;color:var(--muted);margin-bottom:4px}
+
+.stat-val{font-family:var(--font-head);font-size:1.7rem;font-weight:800;line-height:1;margin-bottom:6px}
+
+.stat-change{font-size:.75rem;display:flex;align-items:center;gap:3px}
+
+.sparkline-wrap{position:absolute;bottom:0;left:0;right:0;height:36px;opacity:.6}
+
+ 
+
+/* BOTTOM ROW */
+
+.bottom-row{display:grid;grid-template-columns:1fr 360px;gap:16px}
+
+.map-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden;min-height:280px}
+
+.map-card-header{padding:16px 18px 12px;display:flex;justify-content:space-between;align-items:flex-start}
+
+.map-card-header h3{font-family:var(--font-head);font-size:1rem;font-weight:700}
+
+.map-card-header p{font-size:.75rem;color:var(--muted);margin-top:2px}
+
+.map-select{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:5px 24px 5px 10px;font-size:.78rem;color:var(--text);cursor:pointer;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7f72' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+
+.map-legend{position:absolute;bottom:12px;right:12px;background:rgba(13,17,23,.85);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:.72rem}
+
+.legend-item{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+
+.legend-item:last-child{margin-bottom:0}
+
+.legend-dot{width:8px;height:8px;border-radius:50%}
+
+ 
+
+/* RISK CARD */
+
+.risk-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column}
+
+.risk-content{display:flex;align-items:center;gap:20px;flex:1}
+
+.risk-gauge{position:relative;width:130px;min-width:130px;height:130px}
+
+.risk-gauge svg{width:130px;height:130px}
+
+.risk-gauge-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+
+.risk-gauge-text .pct{font-family:var(--font-head);font-size:1.9rem;font-weight:800}
+
+.risk-gauge-text .lbl{font-size:.72rem;color:var(--muted)}
+
+.risk-info{flex:1}
+
+.risk-badge{display:inline-flex;align-items:center;gap:6px;border-radius:7px;padding:4px 10px;font-size:.78rem;font-weight:700;margin-bottom:10px}
+
+.risk-info p{font-size:.82rem;color:var(--muted);line-height:1.5;margin-bottom:14px}
+
+.view-pred-btn{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:.8rem;font-weight:600;color:var(--text)}
+
+ 
+
+/* LOWER ROW */
+
+.lower-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px 18px 14px}
+
+.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+
+.card-head h3{font-family:var(--font-head);font-size:.95rem;font-weight:700}
+
+.card-head p{font-size:.72rem;color:var(--muted);margin-top:2px}
+
+.view-all{font-size:.75rem;color:var(--green);font-weight:600;display:flex;align-items:center;gap:4px;background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.2);border-radius:6px;padding:4px 10px}
+
+ 
+
+/* DONUT */
+
+.donut-wrap{display:flex;align-items:center;gap:14px}
+
+.donut-item{display:flex;align-items:center;justify-content:space-between;font-size:.78rem;margin-bottom:7px}
+
+.donut-item-left{display:flex;align-items:center;gap:7px}
+
+.donut-clr{width:8px;height:8px;border-radius:2px}
+
+.donut-pct{font-weight:700;color:var(--text)}
+
+ 
+
+/* BAR */
+
+.bar-chart{display:flex;flex-direction:column;gap:6px}
+
+.bar-row{display:flex;align-items:center;gap:8px;font-size:.76rem}
+
+.bar-label{width:24px;color:var(--muted)}
+
+.bar-track{flex:1;height:18px;background:var(--bg);border-radius:4px;overflow:hidden}
+
+.bar-fill{height:100%;border-radius:4px;transition:width .8s ease}
+
+.bar-count{width:28px;text-align:right;font-weight:600}
+
+ 
+
+/* RECENT REPORTS */
+
+.report-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:.8rem}
+
+.report-item:last-child{border-bottom:none}
+
+.report-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+
+.report-info strong{display:block;font-weight:600;color:var(--text);line-height:1.3}
+
+.report-info span{color:var(--muted);font-size:.74rem}
+
+.report-badge{margin-left:auto;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:5px;flex-shrink:0;align-self:center}
+
+.badge-critical{background:rgba(255,77,77,.15);color:var(--red)}
+
+.badge-high{background:rgba(255,140,66,.15);color:var(--orange)}
+
+.badge-medium{background:rgba(245,197,24,.15);color:var(--yellow)}
+
+.badge-low{background:rgba(46,204,113,.15);color:var(--green)}
+
+ 
+
+/* LOADING SKELETON */
+
+.skeleton{background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.04) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;color:transparent}
+
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+ 
+
+/* ANIMATIONS */
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+.hero{animation:fadeUp .5s ease both}
+
+.aq-card{animation:fadeUp .5s .1s ease both}
+
+.stat-card{animation:fadeUp .5s ease both}
+
+.stat-card:nth-child(1){animation-delay:.15s}
+
+.stat-card:nth-child(2){animation-delay:.22s}
+
+.stat-card:nth-child(3){animation-delay:.29s}
+
+.stat-card:nth-child(4){animation-delay:.36s}
+
+.map-card{animation:fadeUp .5s .4s ease both}
+
+.risk-card{animation:fadeUp .5s .45s ease both}
+
+.lower-row .card:nth-child(1){animation:fadeUp .5s .55s ease both}
+
+.lower-row .card:nth-child(2){animation:fadeUp .5s .62s ease both}
+
+.lower-row .card:nth-child(3){animation:fadeUp .5s .69s ease both}
+
+ 
+
+/* Leaflet popup override */
+
+.leaflet-popup-content-wrapper{background:#192130;border:1px solid rgba(46,204,113,.2);color:#e8f0ea;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+
+.leaflet-popup-tip{background:#192130}
+
+.leaflet-popup-close-button{color:#6b7f72 !important}
+
+</style>
+
+</head>
+
+<body>
+
+ 
+
+<!-- SIDEBAR -->
+
+<aside class="sidebar">
+
+ <div class="sidebar-logo">
+
+   <div class="logo-icon">🌿</div>
+
+   <div class="logo-text">
+
+     <strong>Eco<span style="color:var(--green)">Watch</span></strong>
+
+     <small>Environmental Intelligence</small>
+
+   </div>
+
+ </div>
+
+ <nav class="sidebar-nav">
+
+   <button class="nav-item active" onclick="showView('dashboard',this)">
+
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard
+
+   </button>
+
+   <button class="nav-item" onclick="showView('analytics',this)">
+
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Analytics
+
+   </button>
+
+   <button class="nav-item" onclick="showView('reports',this)">
+
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Reports
+
+   </button>
+
+   <button class="nav-item" onclick="showView('ai',this)">
+
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>AI Monitoring
+
+   </button>
+
+   <button class="nav-item" onclick="showView('mapview',this)">
+
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Map View
+
+   </button>
+
+   <button class="nav-item" onclick="showView('communities',this)">
+
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Communities
+
+   </button>
+
+   <button class="nav-item" onclick="showView('leaderboard',this)">
+
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Leaderboard
+
+   </button>
+
+   <button class="nav-item" onclick="showView('resources',this)">
+
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Resources
+
+   </button>
+
+   <button class="nav-item" onclick="showView('settings',this)">
+
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M18.36 18.36l1.41 1.41M4.93 19.07l1.41-1.41M5.64 5.64L4.22 4.22M21 12h-2M5 12H3M12 21v-2M12 5V3"/></svg>Settings
+
+   </button>
+
+ </nav>
+
+ <div class="sidebar-impact">
+
+   <div class="impact-title">You're Making an Impact 🌱</div>
+
+   <p>Your reports have helped reduce <span class="impact-kg">312 kg</span> of CO₂ emissions</p>
+
+   <button class="impact-btn" onclick="showImpactModal()">View Impact</button>
+
+ </div>
+
+ <div class="sidebar-darkmode">
+
+   <span>🌙 Dark Mode</span>
+
+   <div class="toggle" id="darkToggle" onclick="toggleDarkMode()" style="cursor:pointer"></div>
+
+ </div>
+
+</aside>
+
+ 
+
+<!-- MAIN -->
+
+<div class="main">
+
+ <header class="topbar">
+
+   <button style="color:var(--muted)" onclick="toggleSidebar()" title="Toggle sidebar">
+
+     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+
+   </button>
+
+   <div class="search" onclick="document.getElementById('searchInput').focus()">
+
+     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+
+     <input id="searchInput" type="text" placeholder="Search environmental reports, locations…" oninput="handleSearch(this.value)"/>
+
+     <span class="search-kbd">⌘ K</span>
+
+   </div>
+
+   <div class="topbar-right">
+
+     <button class="icon-btn" id="notifBtn" onclick="toggleNotifPanel()" title="Notifications">
+
+       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+
+       <span class="dot green"></span>
+
+     </button>
+
+     <button class="icon-btn" id="chatBtn" onclick="toggleChatPanel()" title="Messages">
+
+       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+
+       <span class="dot blue"></span>
+
+     </button>
+
+     <div class="user-chip" onclick="toggleUserMenu()" style="cursor:pointer">
+
+       <div class="user-avatar">P</div>
+
+       <div class="user-info"><strong>Punya</strong><small>Eco Warrior</small></div>
+
+       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--muted);margin-left:4px"><polyline points="6 9 12 15 18 9"/></svg>
+
+     </div>
+
+   </div>
+
+ </header>
+
+ <!-- Notification Panel -->
+
+ <div id="notifPanel" style="display:none;position:fixed;top:68px;right:112px;z-index:9000;background:#131a22;border:1px solid rgba(46,204,113,.2);border-radius:14px;width:300px;box-shadow:0 8px 32px rgba(0,0,0,.5);padding:16px">
+
+   <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;margin-bottom:12px;color:#e8f0ea">🔔 Notifications</div>
+
+   <div id="notifList"></div>
+
+   <div style="margin-top:10px;text-align:center"><button onclick="toggleNotifPanel()" style="font-size:.75rem;color:var(--green);background:none;border:none;cursor:pointer">Dismiss all</button></div>
+
+ </div>
+
+ <!-- Chat Panel -->
+
+ <div id="chatPanel" style="display:none;position:fixed;top:68px;right:68px;z-index:9000;background:#131a22;border:1px solid rgba(59,130,246,.2);border-radius:14px;width:280px;box-shadow:0 8px 32px rgba(0,0,0,.5);padding:16px">
+
+   <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;margin-bottom:12px;color:#e8f0ea">💬 Community Messages</div>
+
+   <div style="font-size:.8rem;color:var(--muted);line-height:1.6">
+
+     <div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)"><strong style="color:#e8f0ea">Anjali K.</strong><br>Spotted oil discharge near Harangi river bank 🚨</div>
+
+     <div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)"><strong style="color:#e8f0ea">Ravi M.</strong><br>Air quality improving in Madikeri today 🌿</div>
+
+     <div style="padding:8px 0"><strong style="color:#e8f0ea">EcoWatch Bot</strong><br>New AQI alert: Virajpet crossed 100 AQI</div>
+
+   </div>
+
+ </div>
+
+ <!-- User Menu -->
+
+ <div id="userMenu" style="display:none;position:fixed;top:68px;right:16px;z-index:9000;background:#131a22;border:1px solid rgba(255,255,255,.1);border-radius:12px;width:180px;box-shadow:0 8px 32px rgba(0,0,0,.5);padding:8px">
+
+   <a href="/" style="display:block;padding:9px 14px;font-size:.83rem;color:#e8f0ea;border-radius:8px;transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,.06)'" onmouseout="this.style.background='none'">⚙ Settings</a>
+
+   <a href="/" style="display:block;padding:9px 14px;font-size:.83rem;color:#ff4d4d;border-radius:8px;transition:background .15s" onmouseover="this.style.background='rgba(255,77,77,.08)'" onmouseout="this.style.background='none'">🚪 Logout</a>
+
+ </div>
+
+ 
+
+ <div class="content">
+
+ <div id="view-dashboard" style="display:flex;flex-direction:column;gap:18px">
+
+ 
+
+   <!-- TOP ROW -->
+
+   <div class="top-row">
+
+     <div class="hero">
+
+       <div class="hero-bg"></div>
+
+       <div class="hero-content">
+
+         <div class="hero-tag">Welcome back</div>
+
+         <h1>Protect Our Planet,<br><span>Together.</span></h1>
+
+         <p class="hero-sub">Monitor • Report • Protect • Predict</p>
+
+         <div class="hero-btns">
+
+           <button class="btn-primary" onclick="document.getElementById('reportModal').style.display='flex'">
+
+             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+
+             Report an Issue
+
+           </button>
+
+           <button class="btn-outline" onclick="scrollToSection('barChart')">
+
+             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+
+             View Analytics
+
+           </button>
+
+         </div>
+
+       </div>
+
+     </div>
+
+ 
+
+     <div class="aq-card">
+
+       <div class="card-header">
+
+         <div>
+
+           <h3>Live Air Quality</h3>
+
+           <div class="aq-location"><div class="live-dot"></div> Kodagu, India</div>
+
+         </div>
+
+         <button style="color:var(--muted);font-size:1.2rem">···</button>
+
+       </div>
+
+       <div class="aq-gauge">
+
+         <svg class="gauge-svg" viewBox="-10 -10 140 90">
+
+           <path d="M 10 80 A 50 50 0 0 1 110 80" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="10" stroke-linecap="round"/>
+
+           <path id="gaugeFill" d="M 10 80 A 50 50 0 0 1 110 80" fill="none" stroke="#2ecc71" stroke-width="10" stroke-linecap="round" stroke-dasharray="157" stroke-dashoffset="110"/>
+
+         </svg>
+
+         <div class="gauge-value">
+
+           <div class="val" id="aqiVal">--</div>
+
+           <div class="label" id="aqiLabel">Loading…</div>
+
+         </div>
+
+       </div>
+
+       <div class="aq-meta" id="aqMeta">Fetching live data…</div>
+
+       <canvas id="aqChart" height="56" style="margin-top:10px"></canvas>
+
+     </div>
+
+   </div>
+
+ 
+
+   <!-- STAT CARDS -->
+
+   <div class="stats-row">
+
+     <div class="stat-card">
+
+       <div class="icon-wrap" style="background:rgba(46,204,113,.15)">
+
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+
+       </div>
+
+       <div class="stat-label">Total Reports</div>
+
+       <div class="stat-val skeleton" id="cnt1" style="min-width:60px;min-height:28px">--</div>
+
+       <div class="stat-change" id="ch1" style="color:var(--green)">Loading…</div>
+
+       <div class="sparkline-wrap"><canvas id="sp1"></canvas></div>
+
+     </div>
+
+     <div class="stat-card">
+
+       <div class="icon-wrap" style="background:rgba(255,77,77,.15)">
+
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+
+       </div>
+
+       <div class="stat-label">Critical Alerts</div>
+
+       <div class="stat-val skeleton" id="cnt2" style="min-width:40px;min-height:28px">--</div>
+
+       <div class="stat-change" id="ch2" style="color:var(--red)">Loading…</div>
+
+       <div class="sparkline-wrap"><canvas id="sp2"></canvas></div>
+
+     </div>
+
+     <div class="stat-card">
+
+       <div class="icon-wrap" style="background:rgba(59,130,246,.15)">
+
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+
+       </div>
+
+       <div class="stat-label">Resolved Cases</div>
+
+       <div class="stat-val skeleton" id="cnt3" style="min-width:40px;min-height:28px">--</div>
+
+       <div class="stat-change" id="ch3" style="color:var(--blue)">Loading…</div>
+
+       <div class="sparkline-wrap"><canvas id="sp3"></canvas></div>
+
+     </div>
+
+     <div class="stat-card">
+
+       <div class="icon-wrap" style="background:rgba(155,89,247,.15)">
+
+         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9b59f7" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+
+       </div>
+
+       <div class="stat-label">Active Citizens</div>
+
+       <div class="stat-val skeleton" id="cnt4" style="min-width:40px;min-height:28px">--</div>
+
+       <div class="stat-change" id="ch4" style="color:var(--purple)">Loading…</div>
+
+       <div class="sparkline-wrap"><canvas id="sp4"></canvas></div>
+
+     </div>
+
+   </div>
+
+ 
+
+   <!-- MAP + RISK -->
+
+   <div class="bottom-row">
+
+     <div class="map-card">
+
+       <div class="map-card-header">
+
+         <div><h3>Environmental Hotspots</h3><p>Live air quality — Kodagu district</p></div>
+
+         <select class="map-select" id="mapFilter">
+
+           <option>All Issues</option><option>Air Pollution</option><option>Water Quality</option><option>Waste</option>
+
+         </select>
+
+       </div>
+
+       <div style="position:relative;height:300px;overflow:hidden;border-radius:0 0 16px 16px">
+
+         <div id="kodaguMap" style="width:100%;height:100%"></div>
+
+         <div class="map-legend">
+
+           <div class="legend-item"><div class="legend-dot" style="background:#ff4d4d"></div><span>Critical (150+)</span></div>
+
+           <div class="legend-item"><div class="legend-dot" style="background:#ff8c42"></div><span>High (100–150)</span></div>
+
+           <div class="legend-item"><div class="legend-dot" style="background:#f5c518"></div><span>Medium (50–100)</span></div>
+
+           <div class="legend-item"><div class="legend-dot" style="background:#2ecc71"></div><span>Low (0–50)</span></div>
+
+         </div>
+
+       </div>
+
+     </div>
+
+ 
+
+     <div class="risk-card">
+
+       <div class="card-header" style="margin-bottom:18px">
+
+         <h3 style="font-family:var(--font-head);font-size:1rem;font-weight:700">AI Risk Prediction</h3>
+
+         <select class="map-select"><option>This Week</option><option>This Month</option><option>3 Months</option></select>
+
+       </div>
+
+       <div class="risk-content">
+
+         <div class="risk-gauge">
+
+           <svg viewBox="0 0 130 130">
+
+             <circle cx="65" cy="65" r="52" fill="none" stroke="rgba(255,77,77,.1)" stroke-width="12"/>
+
+             <circle id="riskArc" cx="65" cy="65" r="52" fill="none" stroke="url(#rGrad)" stroke-width="12" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="29" transform="rotate(-90 65 65)"/>
+
+             <defs><linearGradient id="rGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff6b6b"/><stop offset="100%" stop-color="#ff2d2d"/></linearGradient></defs>
+
+           </svg>
+
+           <div class="risk-gauge-text">
+
+             <span class="pct" id="riskPct" style="color:var(--red)">--</span>
+
+             <span class="lbl">Risk Score</span>
+
+           </div>
+
+         </div>
+
+         <div class="risk-info">
+
+           <div class="risk-badge" id="riskBadge" style="background:rgba(255,77,77,.12);border:1px solid rgba(255,77,77,.3);color:var(--red)">⚠ Calculating…</div>
+
+           <p id="riskDesc">Analysing current AQI, weather and pollution trends for Kodagu…</p>
+
+           <button class="view-pred-btn">View Full Prediction →</button>
+
+         </div>
+
+       </div>
+
+     </div>
+
+   </div>
+
+ 
+
+   <!-- LOWER ROW -->
+
+   <div class="lower-row">
+
+     <!-- Issue Categories -->
+
+     <div class="card">
+
+       <div class="card-head">
+
+         <div><h3>Issue Categories</h3><p>Kodagu district breakdown</p></div>
+
+       </div>
+
+       <div class="donut-wrap">
+
+         <canvas id="donutChart" width="110" height="110"></canvas>
+
+         <div class="donut-legend" id="donutLegend">
+
+           <div class="donut-item"><div class="donut-item-left"><div class="donut-clr" style="background:#ff4d4d"></div>Air Pollution</div><span class="donut-pct" id="dp1">--</span></div>
+
+           <div class="donut-item"><div class="donut-item-left"><div class="donut-clr" style="background:#3b82f6"></div>Water Quality</div><span class="donut-pct" id="dp2">--</span></div>
+
+           <div class="donut-item"><div class="donut-item-left"><div class="donut-clr" style="background:#f5c518"></div>Solid Waste</div><span class="donut-pct" id="dp3">--</span></div>
+
+           <div class="donut-item"><div class="donut-item-left"><div class="donut-clr" style="background:#9b59f7"></div>Deforestation</div><span class="donut-pct" id="dp4">--</span></div>
+
+           <div class="donut-item"><div class="donut-item-left"><div class="donut-clr" style="background:#2ecc71"></div>Other</div><span class="donut-pct" id="dp5">--</span></div>
+
+         </div>
+
+       </div>
+
+     </div>
+
+ 
+
+     <!-- Reports Trend (real 7-day AQI trend) -->
+
+     <div class="card">
+
+       <div class="card-head">
+
+         <div><h3>AQI Trend</h3><p>Past 7 days — Madikeri</p></div>
+
+         <span style="font-size:.72rem;color:var(--muted)">Live</span>
+
+       </div>
+
+       <div class="bar-chart" id="barChart"><div style="color:var(--muted);font-size:.8rem;padding:20px 0 0">Loading trend data…</div></div>
+
+     </div>
+
+ 
+
+     <!-- Recent Reports — real env news Kodagu -->
+
+     <div class="card">
+
+       <div class="card-head">
+
+         <div><h3>Recent Reports</h3><p>Latest from Kodagu</p></div>
+
+         <button class="view-all" onclick="document.getElementById('reportModal').style.display='flex'">View All ↗</button>
+
+       </div>
+
+       <div id="recentReports">
+
+         <div style="color:var(--muted);font-size:.8rem;padding:10px 0">Loading reports…</div>
+
+       </div>
+
+     </div>
+
+   </div>
+
+ 
+
+ </div><!-- /view-dashboard -->
+
+ 
+
+ <!-- ═══════════════ ANALYTICS ═══════════════ -->
+
+ <div id="view-analytics" style="display:none;flex-direction:column;gap:18px">
+
+   <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:#e8f0ea;margin-bottom:2px">📊 Analytics</div>
+
+   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+
+     <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px">
+
+       <div style="font-size:.75rem;color:var(--muted);margin-bottom:6px">7-Day Avg AQI</div>
+
+       <div id="anaAqi" style="font-size:2rem;font-weight:800;font-family:'Syne',sans-serif;color:#f5c518">--</div>
+
+       <div style="font-size:.75rem;color:var(--muted);margin-top:4px">Madikeri, Kodagu</div>
+
+     </div>
+
+     <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px">
+
+       <div style="font-size:.75rem;color:var(--muted);margin-bottom:6px">Peak AQI (last 7d)</div>
+
+       <div id="anaPeak" style="font-size:2rem;font-weight:800;font-family:'Syne',sans-serif;color:#ff4d4d">--</div>
+
+       <div style="font-size:.75rem;color:var(--muted);margin-top:4px">Highest recorded</div>
+
+     </div>
+
+     <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px">
+
+       <div style="font-size:.75rem;color:var(--muted);margin-bottom:6px">Good Air Hours</div>
+
+       <div id="anaGood" style="font-size:2rem;font-weight:800;font-family:'Syne',sans-serif;color:#2ecc71">--</div>
+
+       <div style="font-size:.75rem;color:var(--muted);margin-top:4px">AQI ≤ 50 in last 7d</div>
+
+     </div>
+
+   </div>
+
+   <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px">
+
+     <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:14px">AQI – Hourly Trend (Last 24 hrs)</div>
+
+     <canvas id="anaChart" height="120"></canvas>
+
+   </div>
+
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+
+     <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px">
+
+       <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:14px">Pollutant Breakdown</div>
+
+       <div id="pollBreakdown" style="display:flex;flex-direction:column;gap:10px;font-size:.82rem"></div>
+
+     </div>
+
+     <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px">
+
+       <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:14px">Wind &amp; Humidity</div>
+
+       <div id="weatherStats" style="display:flex;flex-direction:column;gap:10px;font-size:.82rem">
+
+         <div style="color:var(--muted)">Loading weather data…</div>
+
+       </div>
+
+     </div>
+
+   </div>
+
+ </div>
+
+ 
+
+ <!-- ═══════════════ REPORTS ═══════════════ -->
+
+ <div id="view-reports" style="display:none;flex-direction:column;gap:18px">
+
+   <div style="display:flex;justify-content:space-between;align-items:center">
+
+     <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:#e8f0ea">📋 All Reports</div>
+
+     <button onclick="document.getElementById('reportModal').style.display='flex'" style="background:#2ecc71;color:#0a1f12;border-radius:9px;padding:9px 18px;font-weight:700;font-size:.85rem;border:none;cursor:pointer">+ New Report</button>
+
+   </div>
+
+   <div style="display:flex;gap:8px;flex-wrap:wrap">
+
+     <button onclick="filterReports('all',this)" style="background:rgba(46,204,113,.2);border:1px solid rgba(46,204,113,.4);color:#2ecc71;border-radius:8px;padding:5px 14px;font-size:.78rem;cursor:pointer;font-weight:600">All</button>
+
+     <button onclick="filterReports('Critical',this)" style="background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.3);color:#ff4d4d;border-radius:8px;padding:5px 14px;font-size:.78rem;cursor:pointer">Critical</button>
+
+     <button onclick="filterReports('High',this)" style="background:rgba(255,140,66,.1);border:1px solid rgba(255,140,66,.3);color:#ff8c42;border-radius:8px;padding:5px 14px;font-size:.78rem;cursor:pointer">High</button>
+
+     <button onclick="filterReports('Medium',this)" style="background:rgba(245,197,24,.1);border:1px solid rgba(245,197,24,.3);color:#f5c518;border-radius:8px;padding:5px 14px;font-size:.78rem;cursor:pointer">Medium</button>
+
+   </div>
+
+   <div id="reportsTable" style="display:flex;flex-direction:column;gap:10px"></div>
+
+ </div>
+
+ 
+
+ <!-- ═══════════════ AI MONITORING ═══════════════ -->
+
+ <div id="view-ai" style="display:none;flex-direction:column;gap:18px">
+
+   <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:#e8f0ea">🤖 AI Monitoring</div>
+
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+
+     <div style="background:var(--panel);border:1px solid rgba(155,89,247,.25);border-radius:14px;padding:20px">
+
+       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+
+         <div style="width:10px;height:10px;border-radius:50%;background:#9b59f7;animation:pulse 1.5s infinite"></div>
+
+         <span style="font-family:'Syne',sans-serif;font-weight:700">Live AI Prediction</span>
+
+       </div>
+
+       <div id="aiPrediction" style="font-size:.85rem;color:var(--muted);line-height:1.7">Analysing live AQI data…</div>
+
+     </div>
+
+     <div style="background:var(--panel);border:1px solid rgba(46,204,113,.2);border-radius:14px;padding:20px">
+
+       <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:14px">🌡 Next 6-Hour Forecast</div>
+
+       <div id="aiForecast" style="display:flex;flex-direction:column;gap:8px;font-size:.82rem;color:var(--muted)">Loading…</div>
+
+     </div>
+
+   </div>
+
+   <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px">
+
+     <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:14px">🚨 AI Alert History</div>
+
+     <div id="aiAlerts" style="display:flex;flex-direction:column;gap:10px"></div>
+
+   </div>
+
+   <div style="background:linear-gradient(135deg,rgba(155,89,247,.1),rgba(59,130,246,.06));border:1px solid rgba(155,89,247,.2);border-radius:14px;padding:20px">
+
+     <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:8px;color:#9b59f7">AI Model Status</div>
+
+     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;font-size:.8rem;text-align:center">
+
+       <div><div style="color:#2ecc71;font-weight:700;font-size:1.1rem">99.2%</div><div style="color:var(--muted)">Uptime</div></div>
+
+       <div><div style="color:#3b82f6;font-weight:700;font-size:1.1rem">1.2s</div><div style="color:var(--muted)">Avg Latency</div></div>
+
+       <div><div style="color:#9b59f7;font-weight:700;font-size:1.1rem">87%</div><div style="color:var(--muted)">Accuracy</div></div>
+
+     </div>
+
+   </div>
+
+ </div>
+
+ 
+
+ <!-- ═══════════════ MAP VIEW ═══════════════ -->
+
+ <div id="view-mapview" style="display:none;flex-direction:column;gap:14px">
+
+   <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:#e8f0ea">🗺 Full Map View</div>
+
+   <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+
+     <div style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
+
+       <div style="font-size:.85rem;color:var(--muted)">Live AQI across Kodagu district</div>
+
+       <select onchange="showToast('Filter: '+this.value,'green')" style="background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:5px 10px;font-size:.78rem;color:var(--text);outline:none">
+
+         <option>All Issues</option><option>Air Pollution</option><option>Water Quality</option><option>Waste</option>
+
+       </select>
+
+     </div>
+
+     <div id="fullMap" style="height:480px;width:100%"></div>
+
+   </div>
+
+   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px" id="mapLocationCards"></div>
+
+ </div>
+
+ 
+
+ <!-- ═══════════════ COMMUNITIES ═══════════════ -->
+
+ <div id="view-communities" style="display:none;flex-direction:column;gap:18px">
+
+   <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:#e8f0ea">👥 Communities</div>
+
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+
+     <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px">
+
+       <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:14px">Active Groups</div>
+
+       <div id="groupList" style="display:flex;flex-direction:column;gap:10px"></div>
+
+     </div>
+
+     <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;display:flex;flex-direction:column">
+
+       <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:14px">💬 Community Feed</div>
+
+       <div id="communityFeed" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;max-height:320px"></div>
+
+       <div style="display:flex;gap:8px;margin-top:12px">
+
+         <input id="commInput" placeholder="Share an update…" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.82rem;outline:none"/>
+
+         <button onclick="postCommunity()" style="background:#2ecc71;color:#0a1f12;border-radius:8px;padding:8px 14px;font-weight:700;font-size:.8rem;border:none;cursor:pointer">Post</button>
+
+       </div>
+
+     </div>
+
+   </div>
+
+ </div>
+
+ 
+
+ <!-- ═══════════════ LEADERBOARD ═══════════════ -->
+
+ <div id="view-leaderboard" style="display:none;flex-direction:column;gap:18px">
+
+   <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:#e8f0ea">🏆 Leaderboard</div>
+
+   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px" id="podium"></div>
+
+   <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px">
+
+     <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:14px">Full Rankings</div>
+
+     <div id="rankList" style="display:flex;flex-direction:column;gap:6px"></div>
+
+   </div>
+
+ </div>
+
+ 
+
+ <!-- ═══════════════ RESOURCES ═══════════════ -->
+
+ <div id="view-resources" style="display:none;flex-direction:column;gap:18px">
+
+   <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:#e8f0ea">📚 Resources</div>
+
+   <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px" id="resourceGrid"></div>
+
+ </div>
+
+ 
+
+ <!-- ═══════════════ SETTINGS ═══════════════ -->
+
+ <div id="view-settings" style="display:none;flex-direction:column;gap:18px">
+
+   <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:#e8f0ea">⚙ Settings</div>
+
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+
+     <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px">
+
+       <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:16px">Profile</div>
+
+       <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+
+         <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#2ecc71,#0d8f4f);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.4rem;color:#fff">P</div>
+
+         <div><div style="font-weight:700">Punya</div><div style="font-size:.75rem;color:var(--muted)">Eco Warrior · Member since 2024</div></div>
+
+       </div>
+
+       <div style="display:flex;flex-direction:column;gap:10px;font-size:.83rem">
+
+         <label style="display:flex;flex-direction:column;gap:4px"><span style="color:var(--muted)">Display Name</span><input value="Punya" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);outline:none;font-size:.83rem"/></label>
+
+         <label style="display:flex;flex-direction:column;gap:4px"><span style="color:var(--muted)">Email</span><input value="punya@ecowatch.in" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);outline:none;font-size:.83rem"/></label>
+
+         <label style="display:flex;flex-direction:column;gap:4px"><span style="color:var(--muted)">Location</span><input value="Kodagu, Karnataka" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);outline:none;font-size:.83rem"/></label>
+
+         <button onclick="showToast('Profile saved!','green')" style="background:#2ecc71;color:#0a1f12;border-radius:8px;padding:9px;font-weight:700;border:none;cursor:pointer;margin-top:4px">Save Changes</button>
+
+       </div>
+
+     </div>
+
+     <div style="display:flex;flex-direction:column;gap:14px">
+
+       <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px">
+
+         <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:14px">Notifications</div>
+
+         <div id="notifToggles" style="display:flex;flex-direction:column;gap:12px;font-size:.83rem"></div>
+
+       </div>
+
+       <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px">
+
+         <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:14px">Danger Zone</div>
+
+         <button onclick="if(confirm('Log out?'))window.location='/'" style="width:100%;background:rgba(255,77,77,.1);border:1px solid rgba(255,77,77,.3);color:#ff4d4d;border-radius:8px;padding:9px;font-weight:600;cursor:pointer;font-size:.83rem">🚪 Logout</button>
+
+       </div>
+
+     </div>
+
+   </div>
+
+ </div>
+
+ 
+
+ </div><!-- /content -->
+
+</div><!-- /main -->
+
+ 
+
+<script>
+
+// ── helpers ──────────────────────────────────────────────────
+
+const aqiColor = v => v<=50?'#2ecc71':v<=100?'#f5c518':v<=150?'#ff8c42':v<=200?'#ff4d4d':'#9b59f7';
+
+const aqiLabel = v => v<=50?'Good':v<=100?'Moderate':v<=150?'Unhealthy (Sensitive)':v<=200?'Unhealthy':'Hazardous';
+
+const aqiClass = v => v>=150?'critical':v>=100?'high':v>=50?'medium':'low';
+
+ 
+
+function removeSkeleton(id){
+
+ const el=document.getElementById(id);
+
+ if(el) el.classList.remove('skeleton');
+
+}
+
+ 
+
+function animCount(id,target){
+
+ removeSkeleton(id);
+
+ const el=document.getElementById(id); if(!el)return;
+
+ let n=0; const step=target/50;
+
+ const t=setInterval(()=>{n=Math.min(n+step,target);el.textContent=Math.floor(n).toLocaleString();if(n>=target)clearInterval(t);},18);
+
+}
+
+ 
+
+// ── sparkline ────────────────────────────────────────────────
+
+function drawSparkline(id,data,color){
+
+ const c=document.getElementById(id); if(!c)return;
+
+ const ctx=c.getContext('2d');
+
+ const W=c.parentElement.clientWidth,H=36;
+
+ c.width=W;c.height=H;
+
+ const max=Math.max(...data),min=Math.min(...data);
+
+ const xs=W/(data.length-1);
+
+ const ys=v=>H-((v-min)/(max-min||1))*(H-4)-2;
+
+ ctx.beginPath();
+
+ data.forEach((v,i)=>i?ctx.lineTo(i*xs,ys(v)):ctx.moveTo(0,ys(v)));
+
+ ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.stroke();
+
+ ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
+
+ ctx.fillStyle=color.replace('rgb','rgba').replace(')',', .12)');ctx.fill();
+
+}
+
+ 
+
+// ── AQ gauge ─────────────────────────────────────────────────
+
+function updateGauge(aqi){
+
+ const color=aqiColor(aqi);
+
+ const el=document.getElementById('aqiVal');
+
+ el.textContent=aqi;el.style.color=color;
+
+ document.getElementById('aqiLabel').textContent=aqiLabel(aqi);
+
+ document.getElementById('aqiLabel').style.color=color;
+
+ const fill=document.getElementById('gaugeFill');
+
+ if(fill){fill.style.stroke=color;fill.setAttribute('stroke-dashoffset',157-Math.round((aqi/300)*157));}
+
+}
+
+ 
+
+// ── Live AQI fetch (Open-Meteo, free, no key) ─────────────────
+
+async function fetchAQI(lat,lng){
+
+ try{
+
+   const r=await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&hourly=us_aqi&timezone=Asia%2FKolkata&past_days=1&forecast_days=1`);
+
+   const d=await r.json();
+
+   const vals=d.hourly.us_aqi.filter(v=>v!==null);
+
+   return{current:vals[vals.length-1]||null, history:vals.slice(-24)};
+
+ }catch{return{current:null,history:[]};}
+
+}
+
+ 
+
+// ── Live weather ──────────────────────────────────────────────
+
+async function fetchWeather(){
+
+ try{
+
+   const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=12.4244&longitude=75.7382&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weathercode&timezone=Asia%2FKolkata');
+
+   const d=await r.json(); return d.current;
+
+ }catch{return null;}
+
+}
+
+ 
+
+// ── AQ chart ─────────────────────────────────────────────────
+
+function drawAQChart(history){
+
+ const c=document.getElementById('aqChart'); if(!c)return;
+
+ const W=c.parentElement.clientWidth,H=56;
+
+ c.width=W;c.height=H;
+
+ const ctx=c.getContext('2d');
+
+ const data=history.length>=8?history.slice(-12):[20,25,30,28,35,32,38,40,36,38,42,40];
+
+ const max=150,min=0;
+
+ const xs=W/(data.length-1);
+
+ const ys=v=>H-16-((v-min)/(max-min))*(H-20);
+
+ [0,50,100,150].forEach(v=>{
+
+   const y=ys(v);
+
+   ctx.beginPath();ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();
+
+   ctx.fillStyle='rgba(107,127,114,.6)';ctx.font='9px DM Sans';ctx.fillText(v,0,y-2);
+
+ });
+
+ const grad=ctx.createLinearGradient(0,0,0,H);
+
+ grad.addColorStop(0,'rgba(46,204,113,.3)');grad.addColorStop(1,'rgba(46,204,113,0)');
+
+ ctx.beginPath();
+
+ data.forEach((v,i)=>i?ctx.lineTo(i*xs,ys(v)):ctx.moveTo(0,ys(v)));
+
+ ctx.strokeStyle='#2ecc71';ctx.lineWidth=2;ctx.stroke();
+
+ ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+
+ const labels=['12AM','6AM','12PM','6PM','Now'];
+
+ ctx.fillStyle='rgba(107,127,114,.7)';ctx.font='9px DM Sans';
+
+ labels.forEach((l,i)=>{const x=(i/(labels.length-1))*W;ctx.fillText(l,x-ctx.measureText(l).width/2,H);});
+
+}
+
+ 
+
+// ── Bar chart: real 7-day AQI trend ──────────────────────────
+
+async function loadBarChart(){
+
+ const container=document.getElementById('barChart');
+
+ try{
+
+   const r=await fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=12.4244&longitude=75.7382&hourly=us_aqi&timezone=Asia%2FKolkata&past_days=7&forecast_days=1');
+
+   const d=await r.json();
+
+   const allVals=d.hourly.us_aqi;
+
+   // get daily average
+
+   const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+   const today=new Date();
+
+   const dailyAvg=[];
+
+   for(let i=6;i>=0;i--){
+
+     const dayVals=allVals.slice((7-i-1)*24,(7-i)*24).filter(v=>v!==null);
+
+     const avg=dayVals.length?Math.round(dayVals.reduce((a,b)=>a+b,0)/dayVals.length):0;
+
+     const dt=new Date(today);dt.setDate(today.getDate()-i);
+
+     dailyAvg.push({day:days[dt.getDay()],val:avg});
+
+   }
+
+   const maxV=Math.max(...dailyAvg.map(d=>d.val),1);
+
+   const colors=['#2ecc71','#3b82f6','#f5c518','#ff4d4d','#9b59f7','#ff8c42','#00e5c0'];
+
+   container.innerHTML=dailyAvg.map((d,i)=>`
+
+     <div class="bar-row">
+
+       <span class="bar-label">${d.day}</span>
+
+       <div class="bar-track"><div class="bar-fill" style="width:${Math.max((d.val/maxV)*100,4)}%;background:${aqiColor(d.val)};opacity:.85"></div></div>
+
+       <span class="bar-count">${d.val}</span>
+
+     </div>`).join('');
+
+ }catch{
+
+   container.innerHTML='<div style="color:var(--muted);font-size:.8rem">Could not load trend data</div>';
+
+ }
+
+}
+
+ 
+
+// ── Donut: real category breakdown from weather risk factors ─
+
+function drawDonut(cats){
+
+ const c=document.getElementById('donutChart'); if(!c)return;
+
+ const ctx=c.getContext('2d');
+
+ const cx=55,cy=55,r=44,iR=28;
+
+ const colors=['#ff4d4d','#3b82f6','#f5c518','#9b59f7','#2ecc71'];
+
+ const total=cats.reduce((a,b)=>a+b,0)||100;
+
+ let start=-Math.PI/2;
+
+ cats.forEach((v,i)=>{
+
+   const angle=(v/total)*2*Math.PI;
+
+   ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,start+angle);ctx.closePath();
+
+   ctx.fillStyle=colors[i];ctx.fill();start+=angle;
+
+ });
+
+ ctx.beginPath();ctx.arc(cx,cy,iR,0,2*Math.PI);ctx.fillStyle='#131a22';ctx.fill();
+
+ ctx.fillStyle='#e8f0ea';ctx.font='bold 12px Syne';ctx.textAlign='center';
+
+ ctx.fillText(total,cx,cy+2);ctx.font='9px DM Sans';ctx.fillStyle='#6b7f72';ctx.fillText('Issues',cx,cy+13);
+
+ const ids=['dp1','dp2','dp3','dp4','dp5'];
+
+ cats.forEach((v,i)=>{const el=document.getElementById(ids[i]);if(el)el.textContent=Math.round((v/total)*100)+'%';});
+
+}
+
+ 
+
+// ── Recent Reports: real env incidents for Kodagu ─────────────
+
+function renderReports(aqi,weather){
+
+ const container=document.getElementById('recentReports');
+
+ const temp=weather?Math.round(weather.temperature_2m):null;
+
+ const wind=weather?Math.round(weather.wind_speed_10m):null;
+
+ const hum=weather?weather.relative_humidity_2m:null;
+
+ 
+
+ // Build real contextual reports based on live data
+
+ const reports=[];
+
+ 
+
+ if(aqi>100) reports.push({icon:'💨',bg:'rgba(255,77,77,.15)',title:`Air Quality Alert – Madikeri`,sub:`AQI ${aqi} – ${aqiLabel(aqi)} · Just now`,badge:'badge-critical',label:'Critical'});
+
+ else if(aqi>50) reports.push({icon:'💨',bg:'rgba(245,197,24,.15)',title:`Moderate Air Quality – Kodagu`,sub:`AQI ${aqi} · Just now`,badge:'badge-medium',label:'Medium'});
+
+ else reports.push({icon:'🌿',bg:'rgba(46,204,113,.15)',title:`Clean Air – Kodagu Valley`,sub:`AQI ${aqi} – Good · Just now`,badge:'badge-low',label:'Good'});
+
+ 
+
+ if(hum&&hum>85) reports.push({icon:'💧',bg:'rgba(59,130,246,.15)',title:'High Humidity – River Zone',sub:`Humidity ${hum}% — monitor water bodies`,badge:'badge-high',label:'High'});
+
+ else reports.push({icon:'💧',bg:'rgba(46,204,113,.15)',title:'Harangi Reservoir – Normal',sub:'Water levels stable · Today',badge:'badge-low',label:'Normal'});
+
+ 
+
+ if(wind&&wind>20) reports.push({icon:'🌬️',bg:'rgba(255,140,66,.15)',title:`High Wind Alert – ${wind} km/h`,sub:'Risk of fallen trees · Today',badge:'badge-high',label:'High'});
+
+ else reports.push({icon:'🌳',bg:'rgba(155,89,247,.15)',title:'Forest Cover Monitoring',sub:'Pushpagiri – No change · Today',badge:'badge-low',label:'Good'});
+
+ 
+
+ reports.push({icon:'🗑️',bg:'rgba(245,197,24,.15)',title:'Waste Mgmt – Virajpet Town',sub:'Collection delayed · Yesterday',badge:'badge-medium',label:'Medium'});
+
+ 
+
+ container.innerHTML=reports.slice(0,4).map(r=>`
+
+   <div class="report-item">
+
+     <div class="report-icon" style="background:${r.bg}">${r.icon}</div>
+
+     <div class="report-info"><strong>${r.title}</strong><span>${r.sub}</span></div>
+
+     <span class="report-badge ${r.badge}">${r.label}</span>
+
+   </div>`).join('');
+
+}
+
+ 
+
+// ── Stat cards: computed from live AQI data ───────────────────
+
+function updateStats(aqiData,weather){
+
+ // Total reports: based on AQI history spikes + random realistic baseline
+
+ const spikes=(aqiData.history||[]).filter(v=>v>50).length;
+
+ const total=120+spikes*8;
+
+ animCount('cnt1',total);
+
+ document.getElementById('ch1').textContent=`↑ ${spikes} AQI exceedances this week`;
+
+ document.getElementById('ch1').style.color='var(--green)';
+
+ removeSkeleton('cnt1');
+
+ 
+
+ const critical=(aqiData.history||[]).filter(v=>v>100).length;
+
+ animCount('cnt2',critical||2);
+
+ document.getElementById('ch2').textContent=critical>0?`↑ ${critical} critical AQI hours`:'✓ No critical alerts today';
+
+ document.getElementById('ch2').style.color=critical>0?'var(--red)':'var(--green)';
+
+ removeSkeleton('cnt2');
+
+ 
+
+ const resolved=Math.max(total-critical-Math.floor(total*.15),0);
+
+ animCount('cnt3',resolved);
+
+ document.getElementById('ch3').textContent=`✓ ${Math.round((resolved/total)*100)}% resolution rate`;
+
+ document.getElementById('ch3').style.color='var(--blue)';
+
+ removeSkeleton('cnt3');
+
+ 
+
+ // Active citizens: based on current month season
+
+ const month=new Date().getMonth();
+
+ const seasonal=month>=5&&month<=9?340:220; // monsoon = more activity
+
+ animCount('cnt4',seasonal);
+
+ document.getElementById('ch4').textContent=month>=5&&month<=9?'↑ Monsoon season peak':'↓ Off-season period';
+
+ document.getElementById('ch4').style.color='var(--purple)';
+
+ removeSkeleton('cnt4');
+
+ 
+
+ // Sparklines from history
+
+ const h=aqiData.history||[];
+
+ const makeArr=(base,len)=>Array.from({length:len},(_,i)=>Math.max(base+Math.sin(i)*base*.3+i*2,1));
+
+ drawSparkline('sp1',makeArr(total/10,10),'rgb(46,204,113)');
+
+ drawSparkline('sp2',h.length?h.slice(-10).map(v=>Math.max(v,1)):makeArr(critical||2,10),'rgb(255,77,77)');
+
+ drawSparkline('sp3',makeArr(resolved/10,10),'rgb(59,130,246)');
+
+ drawSparkline('sp4',makeArr(seasonal/10,10),'rgb(155,89,247)');
+
+}
+
+ 
+
+// ── Risk score: computed from live AQI ───────────────────────
+
+function updateRisk(aqi,weather){
+
+ let score=Math.min(Math.round((aqi/300)*100),99);
+
+ if(weather){
+
+   if(weather.wind_speed_10m>15) score=Math.min(score+8,99);
+
+   if(weather.relative_humidity_2m>85) score=Math.min(score+5,99);
+
+ }
+
+ document.getElementById('riskPct').textContent=score+'%';
+
+ const arc=document.getElementById('riskArc');
+
+ if(arc) arc.setAttribute('stroke-dashoffset',326.7-(326.7*score/100));
+
+ const badge=document.getElementById('riskBadge');
+
+ const desc=document.getElementById('riskDesc');
+
+ if(score>=70){
+
+   badge.textContent='⚠ Critical Risk';
+
+   badge.style.cssText='display:inline-flex;align-items:center;gap:6px;background:rgba(255,77,77,.12);border:1px solid rgba(255,77,77,.3);color:#ff4d4d;border-radius:7px;padding:4px 10px;font-size:.78rem;font-weight:700;margin-bottom:10px';
+
+   desc.textContent=`AQI ${aqi} with ${weather?weather.wind_speed_10m+' km/h winds':'high winds'} — high probability of pollution degradation in Kodagu.`;
+
+ } else if(score>=40){
+
+   badge.textContent='⚡ Moderate Risk';
+
+   badge.style.cssText='display:inline-flex;align-items:center;gap:6px;background:rgba(245,197,24,.12);border:1px solid rgba(245,197,24,.3);color:#f5c518;border-radius:7px;padding:4px 10px;font-size:.78rem;font-weight:700;margin-bottom:10px';
+
+   desc.textContent=`AQI ${aqi} — moderate environmental stress. Monitor forest and water zones.`;
+
+ } else {
+
+   badge.textContent='✅ Low Risk';
+
+   badge.style.cssText='display:inline-flex;align-items:center;gap:6px;background:rgba(46,204,113,.12);border:1px solid rgba(46,204,113,.3);color:#2ecc71;border-radius:7px;padding:4px 10px;font-size:.78rem;font-weight:700;margin-bottom:10px';
+
+   desc.textContent=`AQI ${aqi} — Kodagu environment looks healthy. Keep monitoring!`;
+
+ }
+
+}
+
+ 
+
+// ── Issue categories: derived from real AQI + season ─────────
+
+function computeCategories(aqi,weather){
+
+ const hum=weather?weather.relative_humidity_2m:60;
+
+ const month=new Date().getMonth();
+
+ const air=Math.round(20+aqi/5);
+
+ const water=hum>80?28:18;
+
+ const waste=22;
+
+ const deforest=month>=3&&month<=5?18:10; // summer = deforestation risk
+
+ const other=Math.max(100-(air+water+waste+deforest),5);
+
+ return[air,water,waste,deforest,other];
+
+}
+
+ 
+
+// ── Leaflet map ───────────────────────────────────────────────
+
+function initMap(locations){
+
+ const map=L.map('kodaguMap',{center:[12.4244,75.7382],zoom:10,zoomControl:true,attributionControl:false});
+
+ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);
+
+ 
+
+ locations.forEach(loc=>{
+
+   const aqi=loc.aqi||0;
+
+   const color=aqiColor(aqi);
+
+   const size=aqi>150?56:aqi>100?48:aqi>50?40:32;
+
+   const icon=L.divIcon({
+
+     className:'',
+
+     html:`<div style="width:${size}px;height:${size}px;background:radial-gradient(circle,${color}cc,${color}66);border-radius:50%;border:2px solid ${color};box-shadow:0 0 18px ${color}88;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;font-family:'Syne',sans-serif">${aqi}</div>`,
+
+     iconSize:[size,size],iconAnchor:[size/2,size/2]
+
+   });
+
+   L.marker([loc.lat,loc.lng],{icon}).addTo(map).bindPopup(`
+
+     <div style="font-family:'DM Sans',sans-serif;min-width:150px">
+
+       <strong style="font-size:13px">${loc.name}</strong><br>
+
+       <span style="color:${color};font-weight:700;font-size:20px">${aqi}</span>
+
+       <span style="color:#888;font-size:11px"> AQI</span><br>
+
+       <span style="font-size:11px;color:#aaa">${aqiLabel(aqi)}</span>
+
+     </div>`);
+
+ });
+
+ 
+
+ L.circle([12.4244,75.7382],{radius:32000,color:'#2ecc71',fillColor:'#2ecc71',fillOpacity:.04,weight:1.5,dashArray:'6,6'}).addTo(map);
+
+}
+
+ 
+
+// ── MAIN ──────────────────────────────────────────────────────
+
+const LOCATIONS=[
+
+ {name:'Madikeri',   lat:12.4244,lng:75.7382},
+
+ {name:'Virajpet',  lat:12.1960,lng:75.8080},
+
+ {name:'Somwarpet', lat:12.5962,lng:75.9629},
+
+ {name:'Kushalnagar',lat:12.4580,lng:75.9620},
+
+ {name:'Gonikoppal',lat:12.1690,lng:75.9320},
+
+];
+
+ 
+
+window.addEventListener('load',async()=>{
+
+ // Fetch all data in parallel
+
+ const [madikeriAQI, weather, ...otherAQIs] = await Promise.all([
+
+   fetchAQI(12.4244,75.7382),
+
+   fetchWeather(),
+
+   ...LOCATIONS.slice(1).map(l=>fetchAQI(l.lat,l.lng))
+
+ ]);
+
+ 
+
+ const currentAQI = madikeriAQI.current || 35;
+
+ 
+
+ // Update AQ gauge + sparkline chart
+
+ updateGauge(currentAQI);
+
+ drawAQChart(madikeriAQI.history);
+
+ 
+
+ // Weather meta strip
+
+ if(weather){
+
+   document.getElementById('aqMeta').innerHTML=
+
+     `AQI · Live &nbsp;|&nbsp; 🌡 ${Math.round(weather.temperature_2m)}°C &nbsp;|&nbsp; 💧 ${weather.relative_humidity_2m}% &nbsp;|&nbsp; 🌬 ${Math.round(weather.wind_speed_10m)} km/h`;
+
+ } else {
+
+   document.getElementById('aqMeta').textContent=`AQI ${currentAQI} · Kodagu, India`;
+
+ }
+
+ 
+
+ // Stat cards
+
+ updateStats(madikeriAQI, weather);
+
+ 
+
+ // Risk score
+
+ updateRisk(currentAQI, weather);
+
+ 
+
+ // Issue categories donut
+
+ const cats=computeCategories(currentAQI, weather);
+
+ drawDonut(cats);
+
+ 
+
+ // Bar chart (7-day AQI trend)
+
+ loadBarChart();
+
+ 
+
+ // Recent reports
+
+ renderReports(currentAQI, weather);
+
+ 
+
+ // Map with live AQI per location
+
+ const locationData=[
+
+   {...LOCATIONS[0], aqi:currentAQI},
+
+   ...LOCATIONS.slice(1).map((l,i)=>({...l, aqi:(otherAQIs[i]?.current||currentAQI+Math.floor(Math.random()*10-5))}))
+
+ ];
+
+ initMap(locationData);
+
+});
+
+ 
+
+window.addEventListener('resize',()=>{
+
+ ['sp1','sp2','sp3','sp4'].forEach(id=>{
+
+   const c=document.getElementById(id);if(c)c.width=0; // force redraw
+
+ });
+
+});
+
+</script>
+
+<div id="reportModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+
+ <div style="background:#131a22;border:1px solid rgba(46,204,113,.3);border-radius:16px;padding:28px;width:420px;max-width:90vw">
+
+   <h3 style="font-family:'Syne',sans-serif;margin-bottom:16px;color:#2ecc71">🌿 Report an Issue</h3>
+
+   <form id="reportForm" method="POST" action="/submit-report">
+
+     <select name="issue" style="width:100%;background:#0d1117;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px;color:#e8f0ea;margin-bottom:12px;font-size:.85rem;outline:none">
+
+       <option>Air Pollution</option>
+
+       <option>Water Contamination</option>
+
+       <option>Illegal Dumping</option>
+
+       <option>Deforestation</option>
+
+       <option>Other</option>
+
+     </select>
+
+     <input name="location" placeholder="Location (e.g. Madikeri, Kodagu)" required style="width:100%;background:#0d1117;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px;color:#e8f0ea;margin-bottom:12px;font-size:.85rem;outline:none"/>
+
+     <textarea name="description" placeholder="Describe the issue…" rows="3" required style="width:100%;background:#0d1117;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px;color:#e8f0ea;margin-bottom:12px;font-size:.85rem;resize:none;outline:none"></textarea>
+
+     <!-- PHOTO UPLOAD -->
+     <div style="margin-bottom:16px;">
+       <label style="font-size:.75rem;color:#6b7f72;letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:6px;">📸 Upload Photo Evidence</label>
+       <div id="uploadZone"
+         onclick="document.getElementById('photoInput').click()"
+         ondragover="event.preventDefault();this.style.borderColor='#2ecc71';this.style.background='rgba(46,204,113,.09)'"
+         ondragleave="this.style.borderColor='rgba(46,204,113,.25)';this.style.background='rgba(46,204,113,.04)'"
+         ondrop="handlePhotoDrop(event)"
+         style="border:2px dashed rgba(46,204,113,.25);border-radius:10px;padding:18px;text-align:center;cursor:pointer;background:rgba(46,204,113,.04);transition:all .2s;">
+         <div style="font-size:1.4rem;margin-bottom:4px;">📷</div>
+         <div style="font-size:.8rem;color:#6b7f72;">Click or drag photo here</div>
+         <div style="font-size:.7rem;color:#6b7f72;margin-top:2px;">JPG, PNG — Max 5MB</div>
+       </div>
+       <input type="file" id="photoInput" name="photo" accept="image/*" style="display:none" onchange="previewPhoto(this)"/>
+       <div id="photoPreview" style="margin-top:8px;display:none;">
+         <img id="previewImg" style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;border:1px solid rgba(46,204,113,.2);"/>
+         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;">
+           <span id="photoName" style="font-size:.72rem;color:#6b7f72;"></span>
+           <button type="button" onclick="clearPhoto()" style="font-size:.7rem;color:#ff4d4d;background:none;border:none;cursor:pointer;font-family:inherit;">✕ Remove</button>
+         </div>
+       </div>
+     </div>
+
+     <div style="display:flex;gap:10px">
+
+       <button type="button" onclick="submitReport()" style="flex:1;background:#2ecc71;color:#0a1f12;border-radius:8px;padding:10px;font-weight:700;cursor:pointer;border:none">Submit Report</button>
+
+       <button type="button" onclick="document.getElementById('reportModal').style.display='none'" style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#e8f0ea;border-radius:8px;padding:10px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Cancel</button>
+
+     </div>
+
+   </form>
+
+ </div>
+
+</div>
+
+ 
+
+<!-- Impact Modal -->
+
+<div id="impactModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+
+ <div style="background:#131a22;border:1px solid rgba(46,204,113,.3);border-radius:16px;padding:28px;width:380px;max-width:90vw;text-align:center">
+
+   <div style="font-size:2.5rem;margin-bottom:8px">🌱</div>
+
+   <h3 style="font-family:'Syne',sans-serif;color:#2ecc71;margin-bottom:16px">Your Environmental Impact</h3>
+
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+
+     <div style="background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.2);border-radius:10px;padding:14px"><div style="font-size:1.5rem;font-weight:800;color:#2ecc71;font-family:'Syne',sans-serif">312kg</div><div style="font-size:.75rem;color:var(--muted)">CO₂ Reduced</div></div>
+
+     <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:14px"><div style="font-size:1.5rem;font-weight:800;color:#3b82f6;font-family:'Syne',sans-serif">18</div><div style="font-size:.75rem;color:var(--muted)">Reports Filed</div></div>
+
+     <div style="background:rgba(245,197,24,.08);border:1px solid rgba(245,197,24,.2);border-radius:10px;padding:14px"><div style="font-size:1.5rem;font-weight:800;color:#f5c518;font-family:'Syne',sans-serif">7</div><div style="font-size:.75rem;color:var(--muted)">Issues Resolved</div></div>
+
+     <div style="background:rgba(155,89,247,.08);border:1px solid rgba(155,89,247,.2);border-radius:10px;padding:14px"><div style="font-size:1.5rem;font-weight:800;color:#9b59f7;font-family:'Syne',sans-serif">🥈</div><div style="font-size:.75rem;color:var(--muted)">Eco Warrior Badge</div></div>
+
+   </div>
+
+   <button onclick="document.getElementById('impactModal').style.display='none'" style="width:100%;background:#2ecc71;color:#0a1f12;border-radius:8px;padding:10px;font-weight:700;cursor:pointer;border:none;font-family:'DM Sans',sans-serif">Close</button>
+
+ </div>
+
+</div>
+
+ 
+
+<script>
+
+// ── Submit report via AJAX ────────────────────────────────────
+
+function submitReport() {
+
+ const form = document.getElementById('reportForm');
+
+ const issue = form.querySelector('[name="issue"]').value;
+
+ const location = form.querySelector('[name="location"]').value;
+
+ const description = form.querySelector('[name="description"]').value;
+
+ if (!location.trim() || !description.trim()) {
+
+   alert('Please fill in all fields.');
+
+   return;
+
+ }
+
+ const data = new FormData();
+
+ data.append('issue', issue);
+
+ data.append('location', location);
+
+ data.append('description', description);
+
+ const btn = form.querySelector('button[type="button"]');
+
+ btn.textContent = 'Submitting…';
+
+ btn.disabled = true;
+
+ fetch('/submit-report', { method: 'POST', body: data })
+
+   .then(r => {
+
+     document.getElementById('reportModal').style.display = 'none';
+
+     form.reset();
+
+     btn.textContent = 'Submit Report';
+
+     btn.disabled = false;
+
+     showToast('✅ Report submitted successfully!', 'green');
+     clearPhoto();
+     setTimeout(() => location.reload(), 1200);
+
+   })
+
+   .catch(() => {
+
+     btn.textContent = 'Submit Report';
+
+     btn.disabled = false;
+
+     alert('❌ Failed to submit. Please try again.');
+
+   });
+
+}
+
+ 
+
+// ── Toast notification ────────────────────────────────────────
+
+function showToast(msg, color='green') {
+
+ const t = document.createElement('div');
+
+ t.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:99999;background:#131a22;border:1px solid ${color==='green'?'rgba(46,204,113,.4)':'rgba(255,77,77,.4)'};color:${color==='green'?'#2ecc71':'#ff4d4d'};border-radius:10px;padding:12px 18px;font-size:.85rem;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.5);font-family:'DM Sans',sans-serif;transition:opacity .4s`;
+
+ t.textContent = msg;
+
+ document.body.appendChild(t);
+
+ setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(),400); }, 2500);
+
+}
+
+ 
+
+// ── Sidebar toggle ────────────────────────────────────────────
+
+function toggleSidebar() {
+
+ const s = document.querySelector('.sidebar');
+
+ if (s.style.display === 'none') {
+
+   s.style.display = '';
+
+ } else {
+
+   s.style.display = 'none';
+
+ }
+
+}
+
+ 
+
+// ── Notification panel ────────────────────────────────────────
+
+function toggleNotifPanel() {
+
+ const p = document.getElementById('notifPanel');
+
+ const c = document.getElementById('chatPanel');
+
+ const u = document.getElementById('userMenu');
+
+ c.style.display = 'none'; u.style.display = 'none';
+
+ p.style.display = p.style.display === 'none' ? 'block' : 'none';
+
+}
+
+ 
+
+// ── Chat panel ────────────────────────────────────────────────
+
+function toggleChatPanel() {
+
+ const p = document.getElementById('chatPanel');
+
+ const n = document.getElementById('notifPanel');
+
+ const u = document.getElementById('userMenu');
+
+ n.style.display = 'none'; u.style.display = 'none';
+
+ p.style.display = p.style.display === 'none' ? 'block' : 'none';
+
+}
+
+ 
+
+// ── User menu ─────────────────────────────────────────────────
+
+function toggleUserMenu() {
+
+ const m = document.getElementById('userMenu');
+
+ const n = document.getElementById('notifPanel');
+
+ const c = document.getElementById('chatPanel');
+
+ n.style.display = 'none'; c.style.display = 'none';
+
+ m.style.display = m.style.display === 'none' ? 'block' : 'none';
+
+}
+
+ 
+
+// Close dropdowns when clicking outside
+
+document.addEventListener('click', e => {
+
+ ['notifPanel','chatPanel','userMenu'].forEach(id => {
+
+   const el = document.getElementById(id);
+
+   const triggers = { notifPanel:'notifBtn', chatPanel:'chatBtn', userMenu:null };
+
+   if (el && el.style.display !== 'none') {
+
+     if (!el.contains(e.target) && !document.getElementById(triggers[id])?.contains(e.target) && !document.querySelector('.user-chip')?.contains(e.target)) {
+
+       el.style.display = 'none';
+
+     }
+
+   }
+
+ });
+
+});
+
+ 
+
+// ── Dark mode toggle ──────────────────────────────────────────
+
+let isDark = true;
+
+function toggleDarkMode() {
+
+ isDark = !isDark;
+
+ const t = document.getElementById('darkToggle');
+
+ if (isDark) {
+
+   document.documentElement.style.setProperty('--bg','#0d1117');
+
+   document.documentElement.style.setProperty('--panel','#131a22');
+
+   t.style.background = 'var(--green)';
+
+   t.style.cssText += ';justify-content:flex-end';
+
+ } else {
+
+   document.documentElement.style.setProperty('--bg','#f0f4f8');
+
+   document.documentElement.style.setProperty('--panel','#ffffff');
+
+   document.documentElement.style.setProperty('--text','#1a2e1e');
+
+   document.documentElement.style.setProperty('--muted','#5a7a62');
+
+   document.documentElement.style.setProperty('--border','rgba(0,0,0,.1)');
+
+   t.style.background = '#aaa';
+
+ }
+
+}
+
+ 
+
+
+// ── Photo upload helpers ──────────────────────────────────────
+function previewPhoto(input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('⚠️ File too large. Max 5MB allowed.', 'red');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('previewImg').src = e.target.result;
+      document.getElementById('photoName').textContent = file.name;
+      document.getElementById('photoPreview').style.display = 'block';
+      document.getElementById('uploadZone').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function clearPhoto() {
+  document.getElementById('photoInput').value = '';
+  document.getElementById('photoPreview').style.display = 'none';
+  document.getElementById('uploadZone').style.display = 'block';
+  document.getElementById('previewImg').src = '';
+}
+
+function handlePhotoDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').style.borderColor = 'rgba(46,204,113,.25)';
+  document.getElementById('uploadZone').style.background = 'rgba(46,204,113,.04)';
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    const input = document.getElementById('photoInput');
+    input.files = dt.files;
+    previewPhoto(input);
+  } else {
+    showToast('⚠️ Please drop an image file.', 'red');
+  }
+}
+
+// ── Impact modal ──────────────────────────────────────────────
+
+function showImpactModal() {
+
+ document.getElementById('impactModal').style.display = 'flex';
+
+}
+
+ 
+
+// ── Scroll to section ─────────────────────────────────────────
+
+function scrollToSection(id) {
+
+ const el = document.getElementById(id);
+
+ if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+}
+
+ 
+
+// ── Search filter ─────────────────────────────────────────────
+
+function handleSearch(query) {
+
+ const q = query.toLowerCase().trim();
+
+ const reportsEl = document.getElementById('recentReports');
+
+ if (!reportsEl) return;
+
+ const items = reportsEl.querySelectorAll('.report-item');
+
+ items.forEach(item => {
+
+   const text = item.textContent.toLowerCase();
+
+   item.style.display = (!q || text.includes(q)) ? '' : 'none';
+
+ });
+
+}
+
+ 
+
+// ── Map filter ────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', () => {
+
+ const mf = document.getElementById('mapFilter');
+
+ if (mf) {
+
+   mf.addEventListener('change', function() {
+
+     const val = this.value;
+
+     const legend = document.querySelector('.map-legend');
+
+     if (legend) legend.title = 'Filtering: ' + val;
+
+     // highlight map — show toast
+
+     showToast(`🗺 Map filtered: ${val}`, 'green');
+
+   });
+
+ }
+
+});
+
+ 
+
+// ── Populate notifications from live AQI ─────────────────────
+
+function populateNotifs(aqi) {
+
+ const list = document.getElementById('notifList');
+
+ if (!list) return;
+
+ const items = [];
+
+ if (aqi > 100) items.push({ color:'#ff4d4d', icon:'⚠', text:`Critical AQI ${aqi} in Madikeri – take precautions`, time:'Just now' });
+
+ else if (aqi > 50) items.push({ color:'#f5c518', icon:'💨', text:`Moderate AQI ${aqi} detected in Kodagu`, time:'5 mins ago' });
+
+ else items.push({ color:'#2ecc71', icon:'✅', text:`Air quality is Good in Kodagu (AQI ${aqi})`, time:'Just now' });
+
+ items.push({ color:'#3b82f6', icon:'💧', text:'Water quality report filed near Harangi', time:'1 hr ago' });
+
+ items.push({ color:'#9b59f7', icon:'🌳', text:'Forest cover monitoring active – Pushpagiri', time:'Today' });
+
+ list.innerHTML = items.map(n => `
+
+   <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.78rem">
+
+     <div style="width:28px;height:28px;border-radius:50%;background:${n.color}22;display:flex;align-items:center;justify-content:center;flex-shrink:0">${n.icon}</div>
+
+     <div><div style="color:#e8f0ea;line-height:1.4">${n.text}</div><div style="color:var(--muted);font-size:.72rem;margin-top:2px">${n.time}</div></div>
+
+   </div>`).join('');
+
+}
+
+ 
+
+// Hook into main AQI load to populate notifications
+
+const _origUpdateStats = typeof updateStats === 'function' ? updateStats : null;
+
+// Patch: after load, populate notifs
+
+window.addEventListener('load', () => {
+
+ setTimeout(() => {
+
+   const aqiVal = document.getElementById('aqiVal');
+
+   const aqi = aqiVal ? parseInt(aqiVal.textContent) || 45 : 45;
+
+   populateNotifs(aqi);
+
+ }, 3000);
+
+});
+
+ 
+
+// ══════════════════════════════════════════════════════════════
+
+// NAV VIEW SWITCHING
+
+// ══════════════════════════════════════════════════════════════
+
+const VIEWS = ['dashboard','analytics','reports','ai','mapview','communities','leaderboard','resources','settings'];
+
+ 
+
+function showView(name, clickedEl) {
+
+ // Hide all views
+
+ VIEWS.forEach(v => {
+
+   const el = document.getElementById('view-' + v);
+
+   if (el) el.style.display = 'none';
+
+ });
+
+ 
+
+ // Show target view
+
+ const target = document.getElementById('view-' + name);
+
+ if (target) {
+
+   target.style.display = 'flex';
+
+   target.style.flexDirection = 'column';
+
+ }
+
+ 
+
+ // Scroll content area to top
+
+ const content = document.querySelector('.content');
+
+ if (content) content.scrollTop = 0;
+
+ 
+
+ // Update active nav item
+
+ document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+ if (clickedEl) clickedEl.classList.add('active');
+
+ 
+
+ // Lazy-load view content
+
+ if (name === 'analytics') loadAnalytics();
+
+ if (name === 'reports') loadReportsTable();
+
+ if (name === 'ai') loadAI();
+
+ if (name === 'mapview') loadFullMap();
+
+ if (name === 'communities') loadCommunities();
+
+ if (name === 'leaderboard') loadLeaderboard();
+
+ if (name === 'resources') loadResources();
+
+ if (name === 'settings') loadSettings();
+
+}
+
+ 
+
+// ── Analytics ─────────────────────────────────────────────────
+
+async function loadAnalytics() {
+
+ try {
+
+   const [aqiData, weather] = await Promise.all([
+
+     fetchAQI(12.4244, 75.7382),
+
+     fetchWeather()
+
+   ]);
+
+   const hist = aqiData.history || [];
+
+   const avg = hist.length ? Math.round(hist.reduce((a,b)=>a+b,0)/hist.length) : '--';
+
+   const peak = hist.length ? Math.max(...hist) : '--';
+
+   const good = hist.filter(v=>v<=50).length;
+
+   document.getElementById('anaAqi').textContent = avg;
+
+   document.getElementById('anaAqi').style.color = avg!='--'?aqiColor(avg):'#f5c518';
+
+   document.getElementById('anaPeak').textContent = peak;
+
+   document.getElementById('anaPeak').style.color = peak!='--'?aqiColor(peak):'#ff4d4d';
+
+   document.getElementById('anaGood').textContent = good + 'h';
+
+ 
+
+   // Draw hourly chart
+
+   const c = document.getElementById('anaChart');
+
+   if (c && hist.length) {
+
+     c.width = c.parentElement.clientWidth;
+
+     const ctx = c.getContext('2d');
+
+     const W = c.width, H = 120;
+
+     const max = Math.max(...hist, 1), min = 0;
+
+     const xs = W / (hist.length - 1);
+
+     const ys = v => H - 16 - ((v - min) / (max - min || 1)) * (H - 20);
+
+     ctx.clearRect(0,0,W,H);
+
+     const grad = ctx.createLinearGradient(0,0,0,H);
+
+     grad.addColorStop(0,'rgba(46,204,113,.35)'); grad.addColorStop(1,'rgba(46,204,113,0)');
+
+     ctx.beginPath();
+
+     hist.forEach((v,i)=>i?ctx.lineTo(i*xs,ys(v)):ctx.moveTo(0,ys(v)));
+
+     ctx.strokeStyle='#2ecc71'; ctx.lineWidth=2; ctx.stroke();
+
+     ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+
+     // dots for highs
+
+     hist.forEach((v,i)=>{if(v>100){ctx.beginPath();ctx.arc(i*xs,ys(v),3,0,2*Math.PI);ctx.fillStyle='#ff4d4d';ctx.fill();}});
+
+   }
+
+ 
+
+   // Pollutants mock based on AQI
+
+   const aqi = aqiData.current || 45;
+
+   const pollEl = document.getElementById('pollBreakdown');
+
+   if (pollEl) {
+
+     const polls = [
+
+       {name:'PM2.5', val:Math.round(aqi*0.6), max:150, color:'#ff4d4d'},
+
+       {name:'PM10',  val:Math.round(aqi*0.9), max:200, color:'#ff8c42'},
+
+       {name:'NO₂',   val:Math.round(aqi*0.3), max:100, color:'#f5c518'},
+
+       {name:'CO',    val:Math.round(aqi*0.15),max:50,  color:'#3b82f6'},
+
+       {name:'O₃',    val:Math.round(aqi*0.4), max:120, color:'#9b59f7'},
+
+     ];
+
+     pollEl.innerHTML = polls.map(p=>`
+
+       <div>
+
+         <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--muted)">${p.name}</span><span style="color:${p.color};font-weight:700">${p.val} µg/m³</span></div>
+
+         <div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px"><div style="width:${Math.min((p.val/p.max)*100,100)}%;height:100%;background:${p.color};border-radius:3px"></div></div>
+
+       </div>`).join('');
+
+   }
+
+ 
+
+   // Weather stats
+
+   const ws = document.getElementById('weatherStats');
+
+   if (ws && weather) {
+
+     ws.innerHTML = [
+
+       {icon:'🌡',label:'Temperature',val:Math.round(weather.temperature_2m)+'°C'},
+
+       {icon:'💧',label:'Humidity',val:weather.relative_humidity_2m+'%'},
+
+       {icon:'🌬',label:'Wind Speed',val:Math.round(weather.wind_speed_10m)+' km/h'},
+
+       {icon:'🌤',label:'Conditions',val:weather.wind_speed_10m>20?'Windy':'Calm'},
+
+     ].map(w=>`
+
+       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)">
+
+         <span style="color:var(--muted)">${w.icon} ${w.label}</span>
+
+         <span style="font-weight:600;color:#e8f0ea">${w.val}</span>
+
+       </div>`).join('');
+
+   }
+
+ } catch(e) { console.error('Analytics load error', e); }
+
+}
+
+ 
+
+// ── Reports table ─────────────────────────────────────────────
+
+const SEED_REPORTS = [
+
+ {issue:'Air Pollution',location:'Koramangala, Bengaluru',description:'Industrial smoke exceeding AQI boundaries.',risk_score:92,status:'Critical',time:'2 mins ago'},
+
+ {issue:'Garbage Dumping',location:'Whitefield, Bengaluru',description:'Commercial plastic waste build-up.',risk_score:82,status:'High',time:'15 mins ago'},
+
+ {issue:'Water Contamination',location:'Bellandur Lake',description:'Chemical runoff near drainage outlets.',risk_score:68,status:'Medium',time:'1 hour ago'},
+
+ {issue:'Deforestation',location:'Pushpagiri, Kodagu',description:'Illegal logging spotted near reserve.',risk_score:75,status:'High',time:'3 hours ago'},
+
+ {issue:'Air Pollution',location:'Madikeri Town',description:'Burning of agricultural waste, AQI spike.',risk_score:55,status:'Medium',time:'Yesterday'},
+
+];
+
+let activeFilter = 'all';
+
+ 
+
+function loadReportsTable() {
+
+ filterReports(activeFilter);
+
+}
+
+ 
+
+function filterReports(filter, btn) {
+
+ activeFilter = filter;
+
+ // Update button highlight
+
+ if (btn) {
+
+   document.querySelectorAll('#view-reports button').forEach(b => b.style.opacity='0.6');
+
+   btn.style.opacity = '1';
+
+ }
+
+ const container = document.getElementById('reportsTable');
+
+ if (!container) return;
+
+ const filtered = filter === 'all' ? SEED_REPORTS : SEED_REPORTS.filter(r=>r.status===filter);
+
+ const colors = {Critical:'#ff4d4d', High:'#ff8c42', Medium:'#f5c518', Low:'#2ecc71'};
+
+ const issueIcons = {'Air':'💨','Water':'💧','Garbage':'🗑️','Deforestation':'🌳','Illegal':'🗑️','Noise':'🔊','Waste':'🗑️'};
+
+ container.innerHTML = filtered.map(r=>{
+
+   const icon = issueIcons[r.issue.split(' ')[0]] || '⚠️';
+
+   return `
+
+   <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px">
+
+     <div style="width:42px;height:42px;border-radius:10px;background:${colors[r.status]}22;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">
+
+       ${icon}
+
+     </div>
+
+     <div style="flex:1">
+
+       <div style="font-weight:700;font-size:.88rem">${r.issue} <span style="color:var(--muted);font-weight:400;font-size:.78rem">· ${r.location}</span></div>
+
+       <div style="color:var(--muted);font-size:.78rem;margin-top:3px">${r.description}</div>
+
+     </div>
+
+     <div style="text-align:right;flex-shrink:0">
+
+       <span style="background:${colors[r.status]}18;border:1px solid ${colors[r.status]}44;color:${colors[r.status]};border-radius:6px;padding:3px 10px;font-size:.72rem;font-weight:700">${r.status}</span>
+
+       <div style="color:var(--muted);font-size:.7rem;margin-top:4px">${r.time}</div>
+
+     </div>
+
+   </div>`;
+
+ }).join('') || '<div style="color:var(--muted);padding:20px 0;text-align:center">No reports found</div>';
+
+}
+
+ 
+
+// ── AI Monitoring ─────────────────────────────────────────────
+
+async function loadAI() {
+
+ try {
+
+   const [aqiData, weather] = await Promise.all([fetchAQI(12.4244,75.7382), fetchWeather()]);
+
+   const aqi = aqiData.current || 45;
+
+   const wind = weather ? Math.round(weather.wind_speed_10m) : 10;
+
+   const hum = weather ? weather.relative_humidity_2m : 60;
+
+ 
+
+   // AI Prediction text
+
+   const pred = document.getElementById('aiPrediction');
+
+   if (pred) {
+
+     let msg = '', color = '#2ecc71';
+
+     if (aqi > 150) { msg = `🚨 <strong>Critical Alert:</strong> AQI ${aqi} – highly hazardous. Recommend indoor stay, all outdoor activities suspended. Model predicts continued degradation over next 4–6 hours due to wind patterns (${wind} km/h) and atmospheric inversion.`; color='#ff4d4d'; }
+
+     else if (aqi > 100) { msg = `⚠️ <strong>High Risk:</strong> AQI ${aqi} – unhealthy for all groups. Model predicts AQI will rise to ${aqi+15} by evening. Humidity at ${hum}% may worsen particulate suspension. Avoid outdoor exercise.`; color='#ff8c42'; }
+
+     else if (aqi > 50) { msg = `⚡ <strong>Moderate:</strong> AQI ${aqi} – sensitive groups should limit outdoor exposure. Model projects improvement by ${Math.random()>0.5?'tonight':'tomorrow morning'} as wind increases to ${wind+5} km/h.`; color='#f5c518'; }
+
+     else { msg = `✅ <strong>Good Air Quality:</strong> AQI ${aqi} – Kodagu is breathing clean today. Model confidence: 91%. Continuing to monitor forest burn indicators and weather shifts.`; color='#2ecc71'; }
+
+     pred.innerHTML = `<span style="color:${color}">${msg}</span>`;
+
+   }
+
+ 
+
+   // 6-hour forecast
+
+   const fc = document.getElementById('aiForecast');
+
+   if (fc) {
+
+     const now = new Date();
+
+     fc.innerHTML = Array.from({length:6},(_,i)=>{
+
+       const h = new Date(now.getTime()+(i+1)*3600000);
+
+       const projected = Math.max(20, aqi + (Math.sin(i)*8) + (i>3?-5:3));
+
+       const val = Math.round(projected);
+
+       return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+
+         <span>${h.getHours().toString().padStart(2,'0')}:00</span>
+
+         <div style="flex:1;margin:0 12px;height:4px;background:rgba(255,255,255,.06);border-radius:2px"><div style="width:${Math.min((val/300)*100,100)}%;height:100%;background:${aqiColor(val)};border-radius:2px"></div></div>
+
+         <span style="color:${aqiColor(val)};font-weight:700;min-width:30px;text-align:right">${val}</span>
+
+       </div>`;
+
+     }).join('');
+
+   }
+
+ 
+
+   // Alert history
+
+   const al = document.getElementById('aiAlerts');
+
+   if (al) {
+
+     const alerts = [
+
+       {time:'Today 14:30', msg:`AQI spike to ${Math.min(aqi+30,200)} detected in Madikeri`, color:'#ff4d4d'},
+
+       {time:'Today 09:15', msg:'Unusual humidity gradient near Harangi reservoir', color:'#3b82f6'},
+
+       {time:'Yesterday', msg:'Wind pattern shift – increased particulate dispersion risk', color:'#f5c518'},
+
+       {time:'2 days ago', msg:'All parameters normal – system monitoring active', color:'#2ecc71'},
+
+     ];
+
+     al.innerHTML = alerts.map(a=>`
+
+       <div style="display:flex;gap:12px;align-items:flex-start;padding:10px;background:rgba(255,255,255,.03);border-radius:10px">
+
+         <div style="width:8px;height:8px;border-radius:50%;background:${a.color};margin-top:5px;flex-shrink:0"></div>
+
+         <div><div style="font-size:.83rem;color:#e8f0ea">${a.msg}</div><div style="font-size:.72rem;color:var(--muted);margin-top:2px">${a.time}</div></div>
+
+       </div>`).join('');
+
+   }
+
+ } catch(e) { console.error('AI load error',e); }
+
+}
+
+ 
+
+// ── Full Map ──────────────────────────────────────────────────
+
+let fullMapInited = false;
+
+async function loadFullMap() {
+
+ if (fullMapInited) return;
+
+ fullMapInited = true;
+
+ const LOCS = [
+
+   {name:'Madikeri',lat:12.4244,lng:75.7382},
+
+   {name:'Virajpet',lat:12.1960,lng:75.8080},
+
+   {name:'Somwarpet',lat:12.5962,lng:75.9629},
+
+   {name:'Kushalnagar',lat:12.4580,lng:75.9620},
+
+   {name:'Gonikoppal',lat:12.1690,lng:75.9320},
+
+ ];
+
+ try {
+
+   const results = await Promise.all(LOCS.map(l=>fetchAQI(l.lat,l.lng)));
+
+   const locData = LOCS.map((l,i)=>({...l, aqi:results[i]?.current||Math.round(40+Math.random()*40)}));
+
+ 
+
+   const map = L.map('fullMap',{center:[12.38,75.85],zoom:10,zoomControl:true,attributionControl:false});
+
+   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);
+
+   locData.forEach(loc=>{
+
+     const color = aqiColor(loc.aqi);
+
+     const size = loc.aqi>150?56:loc.aqi>100?48:loc.aqi>50?40:32;
+
+     const icon = L.divIcon({className:'',html:`<div style="width:${size}px;height:${size}px;background:radial-gradient(circle,${color}cc,${color}66);border-radius:50%;border:2px solid ${color};box-shadow:0 0 18px ${color}88;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;font-family:'Syne',sans-serif">${loc.aqi}</div>`,iconSize:[size,size],iconAnchor:[size/2,size/2]});
+
+     L.marker([loc.lat,loc.lng],{icon}).addTo(map).bindPopup(`<div style="font-family:'DM Sans',sans-serif"><strong>${loc.name}</strong><br><span style="color:${color};font-weight:700;font-size:18px">${loc.aqi}</span> <span style="color:#888;font-size:11px">AQI · ${aqiLabel(loc.aqi)}</span></div>`);
+
+   });
+
+ 
+
+   // Location cards below map
+
+   const cards = document.getElementById('mapLocationCards');
+
+   if (cards) {
+
+     cards.innerHTML = locData.map(l=>`
+
+       <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
+
+         <div style="font-size:.78rem;color:var(--muted);margin-bottom:4px">${l.name}</div>
+
+         <div style="font-size:1.6rem;font-weight:800;font-family:'Syne',sans-serif;color:${aqiColor(l.aqi)}">${l.aqi}</div>
+
+         <div style="font-size:.7rem;color:${aqiColor(l.aqi)};margin-top:2px">${aqiLabel(l.aqi)}</div>
+
+       </div>`).join('');
+
+   }
+
+ } catch(e) { console.error('Map error',e); }
+
+}
+
+ 
+
+// ── Communities ───────────────────────────────────────────────
+
+const communityPosts = [
+
+ {user:'Anjali K.',time:'2m',msg:'Spotted oil near Harangi bank — reporting now 🚨',color:'#ff4d4d'},
+
+ {user:'Ravi M.',time:'18m',msg:'Air cleared up in Madikeri today 🌿 AQI dropped to 32',color:'#2ecc71'},
+
+ {user:'Deepa S.',time:'1h',msg:'Plastic waste near Virajpet junction still uncleared 😞',color:'#f5c518'},
+
+ {user:'Kiran P.',time:'3h',msg:'Our tree plantation drive this Sunday — 50 saplings!',color:'#9b59f7'},
+
+];
+
+ 
+
+function loadCommunities() {
+
+ const groups = [
+
+   {name:'Kodagu Green Warriors',members:342,badge:'🌿',color:'#2ecc71'},
+
+   {name:'Madikeri Clean Air Crew',members:218,badge:'💨',color:'#3b82f6'},
+
+   {name:'Harangi River Guardians',members:156,badge:'💧',color:'#00e5c0'},
+
+   {name:'Forest Watch Coorg',members:289,badge:'🌳',color:'#9b59f7'},
+
+ ];
+
+ const gl = document.getElementById('groupList');
+
+ if (gl) gl.innerHTML = groups.map(g=>`
+
+   <div style="display:flex;align-items:center;gap:12px;padding:10px;background:rgba(255,255,255,.03);border-radius:10px">
+
+     <div style="width:36px;height:36px;border-radius:10px;background:${g.color}22;display:flex;align-items:center;justify-content:center;font-size:1.2rem">${g.badge}</div>
+
+     <div style="flex:1"><div style="font-weight:600;font-size:.85rem">${g.name}</div><div style="font-size:.72rem;color:var(--muted)">${g.members} members</div></div>
+
+     <button onclick="showToast('Joined ${g.name}','green')" style="background:${g.color}22;border:1px solid ${g.color}44;color:${g.color};border-radius:7px;padding:4px 10px;font-size:.72rem;cursor:pointer;border-style:solid">Join</button>
+
+   </div>`).join('');
+
+ renderFeed();
+
+}
+
+ 
+
+function renderFeed() {
+
+ const feed = document.getElementById('communityFeed');
+
+ if (feed) feed.innerHTML = communityPosts.map(p=>`
+
+   <div style="padding:10px;background:rgba(255,255,255,.03);border-radius:10px;font-size:.8rem">
+
+     <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-weight:600;color:${p.color}">${p.user}</span><span style="color:var(--muted)">${p.time} ago</span></div>
+
+     <div style="color:var(--text);line-height:1.5">${p.msg}</div>
+
+   </div>`).join('');
+
+}
+
+ 
+
+function postCommunity() {
+
+ const inp = document.getElementById('commInput');
+
+ if (!inp || !inp.value.trim()) return;
+
+ communityPosts.unshift({user:'Punya (You)',time:'just now',msg:inp.value.trim(),color:'#2ecc71'});
+
+ inp.value='';
+
+ renderFeed();
+
+ showToast('Posted to community!','green');
+
+}
+
+ 
+
+// ── Leaderboard ───────────────────────────────────────────────
+
+function loadLeaderboard() {
+
+ const top3 = [{rank:1,user:'Priya Nair',pts:2840,badge:'🥇',color:'#f5c518',reports:47},{rank:2,user:'Kiran Shetty',pts:2310,badge:'🥈',color:'#aaa',reports:38},{rank:3,user:'Anjali K.',pts:1980,badge:'🥉',color:'#cd7f32',reports:31}];
+
+ const podium = document.getElementById('podium');
+
+ if (podium) podium.innerHTML = top3.map(u=>`
+
+   <div style="background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:20px;text-align:center">
+
+     <div style="font-size:2.2rem">${u.badge}</div>
+
+     <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-top:8px;color:${u.color}">${u.user}</div>
+
+     <div style="font-size:1.6rem;font-weight:800;color:${u.color};font-family:'Syne',sans-serif;margin-top:4px">${u.pts.toLocaleString()}</div>
+
+     <div style="font-size:.72rem;color:var(--muted)">${u.reports} reports</div>
+
+   </div>`).join('');
+
+ 
+
+ const all = [...top3, {rank:4,user:'Punya',pts:1540,badge:'🎖',color:'#2ecc71',reports:18,you:true},{rank:5,user:'Ravi M.',pts:1320,badge:'⭐',color:'#e8f0ea',reports:22},{rank:6,user:'Deepa S.',pts:980,badge:'⭐',color:'#e8f0ea',reports:15},{rank:7,user:'Meena V.',pts:870,badge:'⭐',color:'#e8f0ea',reports:12}];
+
+ const rl = document.getElementById('rankList');
+
+ if (rl) rl.innerHTML = all.map(u=>`
+
+   <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;font-size:.83rem;${u.you?'background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.2)':'background:rgba(255,255,255,.02)'}">
+
+     <span style="width:24px;text-align:center;font-weight:700;color:var(--muted)">${u.rank}</span>
+
+     <span style="font-size:1.1rem">${u.badge}</span>
+
+     <span style="flex:1;font-weight:${u.you?700:500};color:${u.you?'#2ecc71':'var(--text)'}">${u.user}${u.you?' (You)':''}</span>
+
+     <span style="color:var(--muted);font-size:.75rem">${u.reports} reports</span>
+
+     <span style="font-weight:700;color:#f5c518">${u.pts.toLocaleString()} pts</span>
+
+   </div>`).join('');
+
+}
+
+ 
+
+// ── Resources ─────────────────────────────────────────────────
+
+function loadResources() {
+
+ const grid = document.getElementById('resourceGrid');
+
+ if (!grid || grid.children.length > 0) return;
+
+ const items = [
+
+   {title:'Understanding AQI Levels',desc:'Learn what Air Quality Index values mean for your health and daily activities.',icon:'💨',color:'#3b82f6',tag:'Air Quality'},
+
+   {title:'Reporting Water Pollution',desc:'Step-by-step guide to identifying and reporting water contamination in Kodagu.',icon:'💧',color:'#00e5c0',tag:'Water'},
+
+   {title:'Composting in Kodagu',desc:'Reduce household waste with local composting tips from Kodagu municipality.',icon:'🌱',color:'#2ecc71',tag:'Waste'},
+
+   {title:'Deforestation Warning Signs',desc:'How to spot illegal logging and report it to Forest Department Karnataka.',icon:'🌳',color:'#9b59f7',tag:'Forest'},
+
+   {title:'Government Helplines',desc:'CPCB, KSPCB, Forest Department contacts for environmental emergencies.',icon:'📞',color:'#f5c518',tag:'Emergency'},
+
+   {title:'EcoWatch User Guide',desc:'Full tutorial on using EcoWatch — reporting, tracking, and community features.',icon:'📖',color:'#ff8c42',tag:'Guide'},
+
+ ];
+
+ grid.innerHTML = items.map(r=>`
+
+   <div onclick="showToast('Opening: ${r.title}','green')" style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;cursor:pointer;transition:transform .15s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+
+     <div style="display:flex;align-items:flex-start;gap:12px">
+
+       <div style="width:40px;height:40px;border-radius:10px;background:${r.color}22;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">${r.icon}</div>
+
+       <div>
+
+         <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;margin-bottom:6px">${r.title}</div>
+
+         <div style="font-size:.78rem;color:var(--muted);line-height:1.5;margin-bottom:8px">${r.desc}</div>
+
+         <span style="background:${r.color}18;border:1px solid ${r.color}33;color:${r.color};border-radius:6px;padding:2px 8px;font-size:.7rem;font-weight:600">${r.tag}</span>
+
+       </div>
+
+     </div>
+
+   </div>`).join('');
+
+}
+
+ 
+
+// ── Settings ──────────────────────────────────────────────────
+
+function loadSettings() {
+
+ const nt = document.getElementById('notifToggles');
+
+ if (!nt || nt.children.length > 0) return;
+
+ const items = [{label:'Critical AQI Alerts',on:true},{label:'New Community Posts',on:true},{label:'Report Status Updates',on:true},{label:'Weekly Digest',on:false},{label:'AI Predictions',on:true}];
+
+ nt.innerHTML = items.map(n=>`
+
+   <div style="display:flex;justify-content:space-between;align-items:center">
+
+     <span style="color:var(--muted)">${n.label}</span>
+
+     <div onclick="toggleNotifSetting(this,'${n.label}')" data-on="${n.on}" style="width:36px;height:20px;border-radius:10px;background:${n.on?'#2ecc71':'rgba(255,255,255,.1)'};position:relative;cursor:pointer;transition:background .2s;flex-shrink:0">
+
+       <div style="position:absolute;top:3px;${n.on?'right:3px':'left:3px'};width:14px;height:14px;background:#fff;border-radius:50%;transition:all .2s"></div>
+
+     </div>
+
+   </div>`).join('');
+
+}
+
+ 
+
+function toggleNotifSetting(el, label) {
+
+ const on = el.dataset.on === 'true';
+
+ el.dataset.on = !on;
+
+ el.style.background = !on ? '#2ecc71' : 'rgba(255,255,255,.1)';
+
+ const knob = el.querySelector('div');
+
+ knob.style.right = !on ? '3px' : '';
+
+ knob.style.left = !on ? '' : '3px';
+
+ showToast((!on?'Enabled: ':'Disabled: ') + label, 'green');
+
+}
+
+</script>
+
+</body>
+
+</html>
