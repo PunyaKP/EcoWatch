@@ -1,11 +1,22 @@
-FROM python:3.11
+FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY . .
+RUN addgroup --system ecowatch && adduser --system --group ecowatch
 
-RUN pip install -r requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app.py .
+COPY templates/ templates/
+
+RUN mkdir -p uploads && chown -R ecowatch:ecowatch /app
+
+USER ecowatch
 
 EXPOSE 5000
 
-CMD ["python","app.py"]
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')" || exit 1
+
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "--timeout", "120", "app:app"]

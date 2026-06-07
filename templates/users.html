@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% block title %}Users{% endblock %}
+{% block page_title %}Users{% endblock %}
+{% block page_sub %}Manage EcoWatch platform users{% endblock %}
+{% block extra_css %}
+<style>
+.users-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.u-stat{background:rgba(12,30,15,.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px;position:relative;overflow:hidden;transition:transform .2s}
+.u-stat:hover{transform:translateY(-2px)}
+.u-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent)}
+.u-stat .icon{font-size:1.5rem;margin-bottom:8px}
+.u-stat .val{font-size:2rem;font-weight:700;line-height:1;margin-bottom:4px}
+.u-stat .lbl{font-size:.75rem;color:var(--muted)}
+
+.users-card{background:rgba(12,30,15,.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;margin-bottom:16px}
+.users-hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.05)}
+.users-hdr h3{font-size:.95rem;font-weight:600;color:var(--text)}
+.add-user-btn{background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;border:none;border-radius:9px;padding:8px 16px;font-size:.82rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:'Inter',sans-serif;transition:all .2s}
+.add-user-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(46,204,113,.3)}
+
+.user-row{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s}
+.user-row:last-child{border-bottom:none}
+.user-row:hover{background:rgba(46,204,113,.03)}
+.user-avatar{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem;color:#fff;flex-shrink:0}
+.user-info strong{display:block;font-size:.88rem;font-weight:600;color:var(--text)}
+.user-info span{font-size:.75rem;color:var(--muted)}
+.user-role{padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600}
+.user-status{display:flex;align-items:center;gap:5px;font-size:.78rem;font-weight:500}
+.status-dot{width:7px;height:7px;border-radius:50%;animation:blink 2s infinite}
+.user-actions{display:flex;gap:8px;margin-left:auto}
+.u-btn{padding:5px 12px;border-radius:7px;font-size:.75rem;font-weight:500;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--muted);transition:all .2s;font-family:'Inter',sans-serif}
+.u-btn:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.u-btn.danger:hover{background:rgba(231,76,60,.12);border-color:rgba(231,76,60,.2);color:#e74c3c}
+
+.activity-card{background:rgba(12,30,15,.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:20px}
+.activity-hdr{font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:14px}
+.activity-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.activity-item:last-child{border-bottom:none}
+.act-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.act-body strong{display:block;font-size:.8rem;font-weight:500;color:var(--text)}
+.act-body span{font-size:.72rem;color:var(--muted)}
+.act-time{font-size:.7rem;color:var(--muted);margin-left:auto;white-space:nowrap}
+
+/* Add user modal */
+.add-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center}
+.add-modal.open{display:flex}
+.add-modal-box{background:rgba(10,25,12,.95);backdrop-filter:blur(32px);border:1px solid rgba(46,204,113,.2);border-radius:22px;padding:32px;width:420px;max-width:92vw;box-shadow:0 40px 80px rgba(0,0,0,.6);animation:modalIn .3s cubic-bezier(.22,1,.36,1)}
+@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
+.m-field{margin-bottom:14px}
+.m-field label{display:block;font-size:.73rem;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+.m-field input,.m-field select{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 13px;color:var(--text);font-family:'Inter',sans-serif;font-size:.88rem;outline:none;transition:all .2s}
+.m-field input:focus,.m-field select:focus{border-color:rgba(46,204,113,.4);background:rgba(46,204,113,.04);box-shadow:0 0 0 3px rgba(46,204,113,.08)}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- STATS -->
+<div class="users-stats">
+  <div class="u-stat">
+    <div class="icon">👥</div>
+    <div class="val" style="color:#2ecc71">2</div>
+    <div class="lbl">Total Users</div>
+  </div>
+  <div class="u-stat">
+    <div class="icon">✅</div>
+    <div class="val" style="color:#3498db">2</div>
+    <div class="lbl">Active Users</div>
+  </div>
+  <div class="u-stat">
+    <div class="icon">📋</div>
+    <div class="val" style="color:#f39c12">{{ total_user_reports }}</div>
+    <div class="lbl">Total Reports</div>
+  </div>
+  <div class="u-stat">
+    <div class="icon">🛡</div>
+    <div class="val" style="color:#9b59b6">1</div>
+    <div class="lbl">Administrators</div>
+  </div>
+</div>
+
+<!-- USERS TABLE -->
+<div class="users-card">
+  <div class="users-hdr">
+    <h3>👥 Platform Users</h3>
+    <button class="add-user-btn" onclick="document.getElementById('addModal').classList.add('open')">
+      + Add User
+    </button>
+  </div>
+
+  <!-- Admin User -->
+  <div class="user-row">
+    <div class="user-avatar" style="background:linear-gradient(135deg,#2ecc71,#27ae60)">P</div>
+    <div class="user-info">
+      <strong>Punya</strong>
+      <span>admin@ecowatch.in · admin</span>
+    </div>
+    <span class="user-role" style="background:rgba(46,204,113,.1);color:#2ecc71;border:1px solid rgba(46,204,113,.2)">Administrator</span>
+    <div class="user-status" style="color:#2ecc71;margin-left:16px">
+      <div class="status-dot" style="background:#2ecc71"></div> Online
+    </div>
+    <div style="font-size:.75rem;color:var(--muted);margin-left:16px">{{ total_user_reports }} reports</div>
+    <div class="user-actions">
+      <button class="u-btn">✏ Edit</button>
+      <button class="u-btn">🔑 Reset Password</button>
+    </div>
+  </div>
+
+  <!-- Aarav User -->
+  <div class="user-row">
+    <div class="user-avatar" style="background:linear-gradient(135deg,#3498db,#2980b9)">A</div>
+    <div class="user-info">
+      <strong>Aarav Mehta</strong>
+      <span>aarav@ecowatch.in · aarav</span>
+    </div>
+    <span class="user-role" style="background:rgba(52,152,219,.1);color:#3498db;border:1px solid rgba(52,152,219,.2)">Eco Warrior</span>
+    <div class="user-status" style="color:#2ecc71;margin-left:16px">
+      <div class="status-dot" style="background:#2ecc71"></div> Online
+    </div>
+    <div style="font-size:.75rem;color:var(--muted);margin-left:16px">0 reports</div>
+    <div class="user-actions">
+      <button class="u-btn">✏ Edit</button>
+      <button class="u-btn">🔑 Reset Password</button>
+      <button class="u-btn danger">🗑 Remove</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM GRID -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+  <!-- Recent Activity -->
+  <div class="activity-card">
+    <div class="activity-hdr">📊 Recent Activity</div>
+    {% if reports %}
+      {% for r in reports[:5] %}
+      <div class="activity-item">
+        <div class="act-icon"style="background:{% if r.status=='Critical' %}rgba(231,76,60,.12){% elif r.status=='High' %}rgba(243,156,18,.12){% else %}rgba(46,204,113,.1){% endif %}">
+          {% if r.issue=='Air Pollution' %}💨{% elif r.issue=='Water Contamination' %}💧{% elif r.issue=='Illegal Dumping' %}🗑{% elif r.issue=='Deforestation' %}🌳{% else %}⚠{% endif %}
+        </div>
+        <div class="act-body">
+          <strong>Report submitted — {{ r.issue }}</strong>
+          <span>{{ r.location }}</span>
+        </div>
+        <span class="act-time">{{ r.time }}</span>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="text-align:center;color:var(--muted);padding:20px;font-size:.85rem">No activity yet</div>
+    {% endif %}
+  </div>
+
+  <!-- Permissions -->
+  <div class="activity-card">
+    <div class="activity-hdr">🛡 Role Permissions</div>
+    {% for role, perms in [
+      ('Administrator', ['View Dashboard', 'Submit Reports', 'Resolve Reports', 'Manage Users', 'View Analytics', 'System Settings']),
+      ('Eco Warrior', ['View Dashboard', 'Submit Reports', 'View Analytics'])
+    ] %}
+    <div style="margin-bottom:16px">
+      <div style="font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:8px">
+        {% if role=='Administrator' %}
+          <span style="color:#2ecc71">👑 {{ role }}</span>
+        {% else %}
+          <span style="color:#3498db">🌿 {{ role }}</span>
+        {% endif %}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        {% for perm in perms %}
+        <span style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:3px 9px;font-size:.72rem;color:var(--muted)">✓ {{ perm }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<!-- ADD USER MODAL -->
+<div class="add-modal" id="addModal">
+  <div class="add-modal-box">
+    <h2 style="font-size:1.2rem;font-weight:700;color:#2ecc71;margin-bottom:4px">➕ Add New User</h2>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px">Add a new user to EcoWatch platform</p>
+    <div class="m-field">
+      <label>Full Name</label>
+      <input type="text" placeholder="e.g. Rahul Kumar"/>
+    </div>
+    <div class="m-field">
+      <label>Username</label>
+      <input type="text" placeholder="e.g. rahul"/>
+    </div>
+    <div class="m-field">
+      <label>Email</label>
+      <input type="email" placeholder="e.g. rahul@ecowatch.in"/>
+    </div>
+    <div class="m-field">
+      <label>Password</label>
+      <input type="password" placeholder="••••••••"/>
+    </div>
+    <div class="m-field">
+      <label>Role</label>
+      <select>
+        <option>Eco Warrior</option>
+        <option>Administrator</option>
+        <option>Viewer</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button style="flex:1;background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;border:none;border-radius:10px;padding:12px;font-weight:600;font-size:.92rem;cursor:pointer;font-family:'Inter',sans-serif" onclick="alert('User added! Connect to database to make this permanent.')">Add User</button>
+      <button style="flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;color:var(--text);cursor:pointer;font-family:'Inter',sans-serif" onclick="document.getElementById('addModal').classList.remove('open')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('addModal').addEventListener('click',e=>{
+  if(e.target===document.getElementById('addModal'))
+    document.getElementById('addModal').classList.remove('open');
+});
+</script>
+{% endblock %}

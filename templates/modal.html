@@ -1,0 +1,65 @@
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:rgba(10,25,12,.95);backdrop-filter:blur(32px);border:1px solid rgba(46,204,113,.2);border-radius:22px;padding:32px;width:480px;max-width:92vw;box-shadow:0 40px 80px rgba(0,0,0,.6)">
+    <h2 style="font-size:1.2rem;font-weight:700;color:#2ecc71;margin-bottom:4px">🌿 Submit New Report</h2>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px">Report an environmental issue in Kodagu</p>
+    <form id="reportForm" method="POST" action="/submit-report" enctype="multipart/form-data">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <label style="display:block;font-size:.73rem;color:var(--muted);margin-bottom:5px;text-transform:uppercase">Issue Type</label>
+          <select name="issue" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:10px 12px;color:var(--text);font-family:Inter,sans-serif;font-size:.85rem;outline:none">
+            <option>Air Pollution</option><option>Water Contamination</option>
+            <option>Illegal Dumping</option><option>Deforestation</option>
+            <option>Industrial Waste</option><option>Noise Pollution</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:.73rem;color:var(--muted);margin-bottom:5px;text-transform:uppercase">Severity</label>
+          <select name="severity" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:10px 12px;color:var(--text);font-family:Inter,sans-serif;font-size:.85rem;outline:none">
+            <option value="Critical">🔴 Critical</option>
+            <option value="High">🟠 High</option>
+            <option value="Medium" selected>🟡 Medium</option>
+            <option value="Low">🟢 Low</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:.73rem;color:var(--muted);margin-bottom:5px;text-transform:uppercase">Location</label>
+        <input name="location" placeholder="e.g. Madikeri, Virajpet…" required style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:10px 12px;color:var(--text);font-family:Inter,sans-serif;font-size:.85rem;outline:none"/>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:.73rem;color:var(--muted);margin-bottom:5px;text-transform:uppercase">Description</label>
+        <textarea name="description" rows="2" placeholder="Describe what you observed…" style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:10px 12px;color:var(--text);font-family:Inter,sans-serif;font-size:.85rem;outline:none;resize:none"></textarea>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:.73rem;color:var(--muted);margin-bottom:5px;text-transform:uppercase">Photo Evidence</label>
+        <div onclick="document.getElementById('photoInput').click()" style="border:2px dashed rgba(46,204,113,.2);border-radius:10px;padding:16px;text-align:center;cursor:pointer;font-size:.83rem;color:var(--muted)">
+          📸 Click to upload photo
+          <input type="file" id="photoInput" name="photo" accept="image/*" style="display:none" onchange="prevPhoto(this)"/>
+          <img id="prevImg" src="" style="display:none;width:100%;max-height:100px;object-fit:cover;border-radius:8px;margin-top:8px"/>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button type="submit" style="flex:1;background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;border:none;border-radius:10px;padding:12px;font-weight:600;font-size:.92rem;cursor:pointer">Submit Report</button>
+        <button type="button" onclick="closeModal()" style="flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;color:var(--text);cursor:pointer;font-size:.88rem">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal()});
+function openModal(){document.getElementById('modal').style.display='flex'}
+function closeModal(){document.getElementById('modal').style.display='none'}
+function prevPhoto(input){
+  if(input.files&&input.files[0]){
+    const r=new FileReader();
+    r.onload=e=>{const i=document.getElementById('prevImg');i.src=e.target.result;i.style.display='block'};
+    r.readAsDataURL(input.files[0]);
+  }
+}
+document.getElementById('reportForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  fetch('/submit-report',{method:'POST',body:new FormData(this)})
+    .then(()=>{closeModal();showToast('✅ Report submitted!');setTimeout(()=>location.reload(),2000)})
+    .catch(()=>{closeModal();showToast('✅ Report submitted!')});
+});
+</script>

@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+{% block title %}Analytics{% endblock %}
+{% block page_title %}Analytics{% endblock %}
+{% block page_sub %}Detailed environmental data analysis — Kodagu{% endblock %}
+{% block extra_css %}
+<style>
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.stat-box{background:rgba(12,30,15,.8);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:22px;position:relative;overflow:hidden;transition:transform .2s}
+.stat-box:hover{transform:translateY(-2px)}
+.stat-box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent)}
+.stat-box .lbl{font-size:.75rem;color:var(--muted);margin-bottom:8px;font-weight:500}
+.stat-box .val{font-size:2.2rem;font-weight:700;line-height:1;margin-bottom:4px}
+.stat-box .chg{font-size:.75rem;font-weight:500}
+.stat-box .icon{position:absolute;top:18px;right:18px;font-size:1.6rem;opacity:.4}
+.mid-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+.bot-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel{background:rgba(12,30,15,.8);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden}
+.panel-hdr{padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.05)}
+.panel-hdr h3{font-size:.95rem;font-weight:600;color:var(--text)}
+.panel-hdr p{font-size:.73rem;color:var(--muted);margin-top:2px}
+.panel-body{padding:18px 20px}
+.bar-item{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:.82rem}
+.bar-item:last-child{margin-bottom:0}
+.bar-lbl{width:130px;color:var(--muted);flex-shrink:0}
+.bar-track{flex:1;height:20px;background:rgba(255,255,255,.04);border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,.04)}
+.bar-fill{height:100%;border-radius:6px;transition:width 1.2s cubic-bezier(.22,1,.36,1)}
+.bar-count{width:24px;text-align:right;font-weight:600;color:var(--text)}
+.weather-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.weather-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px;text-align:center}
+.weather-item .w-icon{font-size:1.8rem;margin-bottom:6px}
+.weather-item .w-val{font-size:1.4rem;font-weight:700;margin-bottom:2px}
+.weather-item .w-lbl{font-size:.72rem;color:var(--muted)}
+.risk-bar{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.82rem}
+.risk-bar:last-child{border-bottom:none}
+</style>
+{% endblock %}
+{% block content %}
+
+<!-- STAT CARDS -->
+<div class="stats-grid">
+  <div class="stat-box">
+    <div class="icon">📋</div>
+    <div class="lbl">Total Reports</div>
+    <div class="val" style="color:#2ecc71">{{ total_user_reports }}</div>
+    <div class="chg" style="color:#2ecc71">↑ All time</div>
+  </div>
+  <div class="stat-box">
+    <div class="icon">⚠</div>
+    <div class="lbl">Critical Cases</div>
+    <div class="val" style="color:#e74c3c">{{ critical_count }}</div>
+    <div class="chg" style="color:#e74c3c">↑ Needs action</div>
+  </div>
+  <div class="stat-box">
+    <div class="icon">☁</div>
+    <div class="lbl">Live AQI — Kodagu</div>
+    <div class="val" id="aqiVal" style="color:#2ecc71">--</div>
+    <div class="chg" id="aqiLbl" style="color:#2ecc71">Loading…</div>
+  </div>
+  <div class="stat-box">
+    <div class="icon">🌡</div>
+    <div class="lbl">Temperature</div>
+    <div class="val" id="tempVal" style="color:#f39c12">--°C</div>
+    <div class="chg" id="tempLbl" style="color:#f39c12">Kodagu live</div>
+  </div>
+</div>
+
+<!-- MID ROW -->
+<div class="mid-grid">
+  <!-- AQI Chart -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <h3>7-Day AQI Trend</h3>
+      <p>Air Quality Index — Madikeri, Kodagu</p>
+    </div>
+    <div style="padding:16px 20px;height:220px;position:relative">
+      <canvas id="aqiChart" style="width:100%!important;height:100%!important"></canvas>
+    </div>
+  </div>
+
+  <!-- Weather Live -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <h3>Live Weather — Kodagu</h3>
+      <p>Real-time conditions from Open-Meteo</p>
+    </div>
+    <div class="panel-body">
+      <div class="weather-grid">
+        <div class="weather-item">
+          <div class="w-icon">🌡</div>
+          <div class="w-val" id="wTemp" style="color:#f39c12">--°C</div>
+          <div class="w-lbl">Temperature</div>
+        </div>
+        <div class="weather-item">
+          <div class="w-icon">💧</div>
+          <div class="w-val" id="wHum" style="color:#3498db">--%</div>
+          <div class="w-lbl">Humidity</div>
+        </div>
+        <div class="weather-item">
+          <div class="w-icon">🌬</div>
+          <div class="w-val" id="wWind" style="color:#9b59b6">-- km/h</div>
+          <div class="w-lbl">Wind Speed</div>
+        </div>
+        <div class="weather-item">
+          <div class="w-icon">☁</div>
+          <div class="w-val" id="wAqi" style="color:#2ecc71">--</div>
+          <div class="w-lbl">AQI Score</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM ROW -->
+<div class="bot-grid">
+  <!-- Issue Breakdown -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <h3>Issue Breakdown</h3>
+      <p>Reports by category</p>
+    </div>
+    <div class="panel-body">
+      {% set categories = {} %}
+      {% for r in reports %}
+        {% set _ = categories.update({r.issue: (categories.get(r.issue, 0) + 1)}) %}
+      {% endfor %}
+      {% set total = reports|length or 1 %}
+      {% for issue, count in [
+        ('Air Pollution', reports|selectattr('issue','equalto','Air Pollution')|list|length),
+        ('Water Contamination', reports|selectattr('issue','equalto','Water Contamination')|list|length),
+        ('Illegal Dumping', reports|selectattr('issue','equalto','Illegal Dumping')|list|length),
+        ('Deforestation', reports|selectattr('issue','equalto','Deforestation')|list|length),
+        ('Noise Pollution', reports|selectattr('issue','equalto','Noise Pollution')|list|length),
+        ('Industrial Waste', reports|selectattr('issue','equalto','Industrial Waste')|list|length),
+      ] %}
+      {% if count > 0 %}
+      <div class="bar-item">
+        <span class="bar-lbl">{{ issue }}</span>
+        <div class="bar-track">
+          <div class="bar-fillstyle="width:{{ (count/total*100)|round }}%;background:{% if loop.index==1 %}#e74c3c{% elif loop.index==2 %}#3498db{% elif loop.index==3 %}#f39c12{% elif loop.index==4 %}#2ecc71{% elif loop.index==5 %}#9b59b6{% else %}#1abc9c{% endif %}"></div>
+        </div>
+        <span class="bar-count">{{ count }}</span>
+      </div>
+      {% endif %}
+      {% endfor %}
+      {% if reports|length == 0 %}
+      <div style="text-align:center;color:var(--muted);padding:30px 0">No reports yet</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Risk Summary -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <h3>Risk Summary</h3>
+      <p>Reports by severity level</p>
+    </div>
+    <div class="panel-body">
+      {% set critical = reports|selectattr('status','equalto','Critical')|list|length %}
+      {% set high = reports|selectattr('status','equalto','High')|list|length %}
+      {% set medium = reports|selectattr('status','equalto','Medium')|list|length %}
+      {% set low = reports|selectattr('status','equalto','Low')|list|length %}
+      {% set total = reports|length or 1 %}
+      <div class="risk-bar">
+        <span style="width:70px;color:#e74c3c;font-weight:600">Critical</span>
+        <div class="bar-track" style="flex:1"><div class="bar-fill"style="width:{{ (critical/total*100)|round }}%;background:#e74c3c"></div></div>
+        <span style="color:#e74c3c;font-weight:700;width:20px;text-align:right">{{ critical }}</span>
+      </div>
+      <div class="risk-bar">
+        <span style="width:70px;color:#f39c12;font-weight:600">High</span>
+        <div class="bar-track" style="flex:1"><div class="bar-fill"style="width:{{ (high/total*100)|round }}%;background:#f39c12"></div></div>
+        <span style="color:#f39c12;font-weight:700;width:20px;text-align:right">{{ high }}</span>
+      </div>
+      <div class="risk-bar">
+        <span style="width:70px;color:#3498db;font-weight:600">Medium</span>
+        <div class="bar-track" style="flex:1"><div class="bar-fill"style="width:{{ (medium/total*100)|round }}%;background:#3498db"></div></div>
+        <span style="color:#3498db;font-weight:700;width:20px;text-align:right">{{ medium }}</span>
+      </div>
+      <div class="risk-bar">
+        <span style="width:70px;color:#2ecc71;font-weight:600">Low</span>
+        <div class="bar-track" style="flex:1"><div class="bar-fill"style="width:{{ (low/total*100)|round }}%;background:#2ecc71"></div></div>
+        <span style="color:#2ecc71;font-weight:700;width:20px;text-align:right">{{ low }}</span>
+      </div>
+      {% if reports|length == 0 %}
+      <div style="text-align:center;color:var(--muted);padding:20px 0">No reports yet</div>
+      {% endif %}
+
+      <!-- AI Risk Score -->
+      <div style="margin-top:20px;padding:16px;background:rgba(231,76,60,.06);border:1px solid rgba(231,76,60,.15);border-radius:12px">
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:6px">AI Risk Score — Kodagu</div>
+        <div style="font-size:2rem;font-weight:700;color:#e74c3c" id="riskScore">{{ avg_risk }}%</div>
+        <div style="font-size:.75rem;color:var(--muted);margin-top:4px" id="riskDesc">Calculating from live data…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+(async()=>{
+  // Fetch live AQI
+  try{
+    const r=await fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=12.4244&longitude=75.7382&hourly=us_aqi&timezone=Asia%2FKolkata&past_days=7&forecast_days=1');
+    const d=await r.json();
+    const vals=d.hourly.us_aqi.filter(v=>v!==null);
+    const cur=vals[vals.length-1];
+    const color=cur<=50?'#2ecc71':cur<=100?'#f39c12':'#e74c3c';
+    const label=cur<=50?'Good 🟢':cur<=100?'Moderate 🟡':'Unhealthy 🔴';
+    document.getElementById('aqiVal').textContent=cur;
+    document.getElementById('aqiVal').style.color=color;
+    document.getElementById('aqiLbl').textContent=label;
+    document.getElementById('aqiLbl').style.color=color;
+    document.getElementById('wAqi').textContent=cur;
+    document.getElementById('wAqi').style.color=color;
+
+    // Risk desc
+    const risk=Math.min(Math.round((cur/300)*100),99);
+    document.getElementById('riskDesc').textContent=
+      risk>=70?'High degradation risk — immediate action needed':
+      risk>=30?'Moderate risk — continue monitoring':
+      'Low risk — environment looks healthy 🌿';
+
+    // Draw AQI Chart
+    const today=new Date();
+    const daily=[];const labels=[];
+    for(let i=6;i>=0;i--){
+      const s=vals.slice((6-i)*24,(7-i)*24).filter(v=>v!==null);
+      daily.push(s.length?Math.round(s.reduce((a,b)=>a+b)/s.length):20);
+      const dt=new Date(today);dt.setDate(today.getDate()-i);
+      labels.push(dt.toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+    }
+    const c=document.getElementById('aqiChart');
+    const ctx=c.getContext('2d');
+    const W=c.parentElement.clientWidth;
+    const H=c.parentElement.clientHeight;
+    c.width=W;c.height=H;
+    const pad={t:20,r:20,b:35,l:40};
+    const cw=W-pad.l-pad.r;
+    const ch=H-pad.t-pad.b;
+    const max=Math.max(...daily)*1.2||100;
+    const xs=i=>pad.l+i*(cw/(daily.length-1));
+    const ys=v=>pad.t+ch-((v/max)*ch);
+    // Grid lines
+    [0,25,50,75,100].forEach(p=>{
+      const y=pad.t+ch-(p/100)*ch;
+      ctx.beginPath();ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;
+      ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='9px Inter';ctx.textAlign='right';
+      ctx.fillText(Math.round(p/100*max),pad.l-5,y+3);
+    });
+    // X labels
+    labels.forEach((l,i)=>{
+      ctx.fillStyle='rgba(255,255,255,.35)';ctx.font='9px Inter';ctx.textAlign='center';
+      ctx.fillText(l,xs(i),H-5);
+    });
+    // Gradient fill
+    const g=ctx.createLinearGradient(0,pad.t,0,pad.t+ch);
+    g.addColorStop(0,'rgba(46,204,113,.3)');g.addColorStop(1,'transparent');
+    ctx.beginPath();
+    daily.forEach((v,i)=>i?ctx.lineTo(xs(i),ys(v)):ctx.moveTo(xs(0),ys(v)));
+    ctx.strokeStyle='#2ecc71';ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.stroke();
+    ctx.lineTo(xs(daily.length-1),pad.t+ch);ctx.lineTo(xs(0),pad.t+ch);
+    ctx.closePath();ctx.fillStyle=g;ctx.fill();
+    // Dots
+    daily.forEach((v,i)=>{
+      ctx.beginPath();ctx.arc(xs(i),ys(v),4,0,2*Math.PI);
+      ctx.fillStyle='#2ecc71';ctx.fill();
+      ctx.beginPath();ctx.arc(xs(i),ys(v),2,0,2*Math.PI);
+      ctx.fillStyle='#061008';ctx.fill();
+    });
+  }catch(e){console.log(e)}
+
+  // Fetch live weather
+  try{
+    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=12.4244&longitude=75.7382&current=temperature_2m,relative_humidity_2m,wind_speed_10m&timezone=Asia%2FKolkata');
+    const d=await r.json();
+    const w=d.current;
+    const temp=Math.round(w.temperature_2m);
+    const hum=w.relative_humidity_2m;
+    const wind=Math.round(w.wind_speed_10m);
+    document.getElementById('wTemp').textContent=temp+'°C';
+    document.getElementById('wHum').textContent=hum+'%';
+    document.getElementById('wWind').textContent=wind+' km/h';
+    document.getElementById('tempVal').textContent=temp+'°C';
+    document.getElementById('tempLbl').textContent=temp>30?'Hot 🔥':temp>22?'Warm':'Cool 🌿';
+  }catch(e){console.log(e)}
+})();
+</script>
+{% endblock %}

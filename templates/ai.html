@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}AI Insights{% endblock %}
+{% block page_title %}AI Insights{% endblock %}
+{% block page_sub %}Intelligent environmental predictions for Kodagu{% endblock %}
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+  <div class="card" style="padding:24px">
+    <h3 style="font-size:1rem;font-weight:600;margin-bottom:16px;color:#2ecc71">🤖 AI Risk Assessment</h3>
+    <div style="font-size:3rem;font-weight:700;color:#e74c3c;margin-bottom:8px" id="riskScore">{{ avg_risk }}%</div>
+    <p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin-bottom:16px">Based on current AQI levels, weather patterns and historical data for Kodagu district.</p>
+    <div style="background:rgba(46,204,113,.06);border:1px solid rgba(46,204,113,.15);border-radius:10px;padding:14px;font-size:.82rem;color:var(--muted);line-height:1.7">
+      <strong style="color:var(--text);display:block;margin-bottom:6px">AI Recommendations</strong>
+      🌿 Monitor Pushpagiri forest zone for deforestation activity<br>
+      💧 Check Harangi reservoir water quality this week<br>
+      💨 AQI near Madikeri — recommend outdoor activity limits<br>
+      🚛 Increase waste collection frequency in Virajpet
+    </div>
+  </div>
+  <div class="card" style="padding:24px">
+    <h3 style="font-size:1rem;font-weight:600;margin-bottom:16px;color:#2ecc71">📊 Predictions</h3>
+    {% set predictions = [
+      ('Air Quality', 'Likely to improve over next 48hrs', '↑', '#2ecc71'),
+      ('Rainfall', 'High probability — 78%', '🌧', '#3498db'),
+      ('Fire Risk', 'Low risk this week', '↓', '#2ecc71'),
+      ('Flood Risk', 'Monitor Harangi river levels', '⚠', '#f39c12'),
+    ] %}
+    {% for title, desc, icon, color in predictions %}
+    <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;margin-bottom:10px">
+      <div style="width:36px;height:36px;border-radius:9px;background:rgba(46,204,113,.08);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">{{ icon }}</div>
+      <div>
+        <div style="font-weight:600;font-size:.85rem;color:var(--text)">{{ title }}</div>
+        <div style="font-size:.75rem;color:var(--muted)">{{ desc }}</div>
+      </div>
+      <spanstyle="margin-left:auto;color:{{ color }};font-weight:700">{{ icon }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

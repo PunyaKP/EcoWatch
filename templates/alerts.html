@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% block title %}Alerts{% endblock %}
+{% block page_title %}Alerts{% endblock %}
+{% block page_sub %}Critical environmental alerts — Kodagu district{% endblock %}
+{% block extra_css %}
+<style>
+.alerts-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.alert-stat{background:rgba(12,30,15,.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px;position:relative;overflow:hidden;transition:transform .2s}
+.alert-stat:hover{transform:translateY(-2px)}
+.alert-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent)}
+.alert-stat .icon{font-size:1.6rem;margin-bottom:10px}
+.alert-stat .val{font-size:2rem;font-weight:700;line-height:1;margin-bottom:4px}
+.alert-stat .lbl{font-size:.75rem;color:var(--muted)}
+
+.alerts-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:18px}
+.alert-item{
+  background:rgba(12,30,15,.82);
+  backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:18px;
+  display:flex;align-items:flex-start;gap:16px;
+  transition:all .2s;position:relative;overflow:hidden;
+}
+.alert-item:hover{transform:translateX(4px);border-color:rgba(255,255,255,.14)}
+.alert-item.critical{border-left:3px solid #e74c3c}
+.alert-item.high{border-left:3px solid #f39c12}
+.alert-item.medium{border-left:3px solid #3498db}
+.alert-item.low{border-left:3px solid #2ecc71}
+.alert-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.alert-body{flex:1}
+.alert-body h4{font-size:.92rem;font-weight:600;color:var(--text);margin-bottom:4px}
+.alert-body p{font-size:.8rem;color:var(--muted);line-height:1.5;margin-bottom:8px}
+.alert-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.alert-meta span{font-size:.73rem;color:var(--muted);display:flex;align-items:center;gap:4px}
+.alert-badge{padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:700;flex-shrink:0;align-self:flex-start}
+.alert-photo{width:60px;height:60px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.1);cursor:pointer;transition:transform .2s}
+.alert-photo:hover{transform:scale(1.05)}
+.alert-actions{display:flex;gap:8px;margin-top:10px}
+.resolve-btn{
+  background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.2);
+  color:#2ecc71;border-radius:8px;padding:5px 14px;
+  font-size:.75rem;font-weight:600;cursor:pointer;
+  transition:all .2s;font-family:'Inter',sans-serif;
+}
+.resolve-btn:hover{background:rgba(46,204,113,.2)}
+.view-btn-sm{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  color:var(--muted);border-radius:8px;padding:5px 14px;
+  font-size:.75rem;font-weight:500;cursor:pointer;
+  transition:all .2s;font-family:'Inter',sans-serif;
+}
+.view-btn-sm:hover{background:rgba(255,255,255,.1);color:var(--text)}
+
+.empty-state{
+  text-align:center;padding:60px 20px;
+  background:rgba(12,30,15,.82);
+  backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;
+}
+.empty-state .emoji{font-size:3rem;margin-bottom:14px}
+.empty-state h3{font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:6px}
+.empty-state p{font-size:.85rem;color:var(--muted)}
+
+/* Live alert ticker */
+.alert-ticker{
+  background:rgba(231,76,60,.08);
+  border:1px solid rgba(231,76,60,.2);
+  border-radius:12px;padding:10px 16px;
+  margin-bottom:16px;
+  display:flex;align-items:center;gap:10px;
+  font-size:.82rem;
+}
+.ticker-dot{width:8px;height:8px;border-radius:50%;background:#e74c3c;animation:blink 1s infinite;flex-shrink:0}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- LIVE TICKER -->
+{% set critical_list = reports|selectattr('status','equalto','Critical')|list %}
+{% set high_list = reports|selectattr('status','equalto','High')|list %}
+{% if critical_list %}
+<div class="alert-ticker">
+  <div class="ticker-dot"></div>
+  <span style="color:#e74c3c;font-weight:600">LIVE ALERT:</span>
+  <span style="color:var(--text)">{{ critical_list[0].issue }} reported at {{ critical_list[0].location }} — {{ critical_list[0].time }}</span>
+  <span style="margin-left:auto;color:var(--muted);font-size:.75rem">{{ critical_list|length }} active critical alerts</span>
+</div>
+{% endif %}
+
+<!-- STATS -->
+<div class="alerts-stats">
+  <div class="alert-stat">
+    <div class="icon">🔴</div>
+    <div class="val" style="color:#e74c3c">{{ reports|selectattr('status','equalto','Critical')|list|length }}</div>
+    <div class="lbl">Critical Alerts</div>
+  </div>
+  <div class="alert-stat">
+    <div class="icon">🟠</div>
+    <div class="val" style="color:#f39c12">{{ reports|selectattr('status','equalto','High')|list|length }}</div>
+    <div class="lbl">High Priority</div>
+  </div>
+  <div class="alert-stat">
+    <div class="icon">🔵</div>
+    <div class="val" style="color:#3498db">{{ reports|selectattr('status','equalto','Medium')|list|length }}</div>
+    <div class="lbl">Medium Priority</div>
+  </div>
+  <div class="alert-stat">
+    <div class="icon">🟢</div>
+    <div class="val" style="color:#2ecc71">{{ reports|selectattr('status','equalto','Low')|list|length }}</div>
+    <div class="lbl">Low Priority</div>
+  </div>
+</div>
+
+<!-- LIVE AQI ALERT -->
+<div class="alert-item critical" style="margin-bottom:12px" id="aqiAlert">
+  <div class="alert-icon" style="background:rgba(231,76,60,.1)">☁</div>
+  <div class="alert-body">
+    <h4>Live Air Quality Monitor — Kodagu</h4>
+    <p id="aqiAlertDesc">Fetching live AQI data from Madikeri monitoring station…</p>
+    <div class="alert-meta">
+      <span>📍 Madikeri, Kodagu</span>
+      <span>🕐 Updated just now</span>
+      <span id="aqiAlertStatus" style="color:#2ecc71">● Good</span>
+    </div>
+  </div>
+  <span class="alert-badge" id="aqiAlertBadge" style="background:rgba(46,204,113,.12);color:#2ecc71">AQI --</span>
+</div>
+
+<!-- ALL ALERTS -->
+<div class="alerts-grid">
+  {% set all_alerts = reports|selectattr('status','in',['Critical','High','Medium','Low'])|list %}
+  {% if all_alerts %}
+    {% for r in reports %}
+    <div class="alert-item {{ r.status|lower }}">
+      <div class="alert-icon"style="background:
+        {% if r.status=='Critical' %}rgba(231,76,60,.12)
+        {% elif r.status=='High' %}rgba(243,156,18,.12)
+        {% elif r.status=='Medium' %}rgba(52,152,219,.12)
+        {% else %}rgba(46,204,113,.1){% endif %}">
+        {% if r.issue=='Air Pollution' %}💨
+        {% elif r.issue=='Water Contamination' %}💧
+        {% elif r.issue=='Illegal Dumping' %}🗑
+        {% elif r.issue=='Deforestation' %}🌳
+        {% elif r.issue=='Noise Pollution' %}🔊
+        {% elif r.issue=='Industrial Waste' %}🏭
+        {% else %}⚠{% endif %}
+      </div>
+
+      {% if r.img %}
+      <img src="{{ r.img }}"
+        class="alert-photo"
+        onclick="window.open('{{ r.img }}','_blank')"
+        title="Click to view full photo"/>
+      {% endif %}
+
+      <div class="alert-body">
+        <h4>{{ r.issue }} — {{ r.location }}</h4>
+        <p>{{ r.description or 'Environmental issue reported in Kodagu district.' }}</p>
+        <div class="alert-meta">
+          <span>📍 {{ r.location }}</span>
+          <span>🕐 {{ r.time }}</span>
+          <span>⚡ Risk Score: {{ r.risk_score }}</span>
+        </div>
+        <div class="alert-actions">
+          <form method="POST" action="/resolve-report/{{ loop.index0 }}" style="display:inline">
+            <button type="submit" class="resolve-btn">✓ Mark Resolved</button>
+          </form>
+          <button class="view-btn-sm" onclick="window.location='/reports'">View Details</button>
+        </div>
+      </div>
+
+      <span class="alert-badge"style="
+        {% if r.status=='Critical' %}background:rgba(231,76,60,.15);color:#e74c3c
+        {% elif r.status=='High' %}background:rgba(243,156,18,.15);color:#f39c12
+        {% elif r.status=='Medium' %}background:rgba(52,152,219,.15);color:#3498db
+        {% else %}background:rgba(46,204,113,.12);color:#2ecc71{% endif %}">
+        {{ r.status }}
+      </span>
+    </div>
+    {% endfor %}
+  {% else %}
+  <div class="empty-state">
+    <div class="emoji">✅</div>
+    <h3>No Active Alerts</h3>
+    <p>Kodagu environment is looking healthy right now.<br>Submit a report if you spot an issue.</p>
+  </div>
+  {% endif %}
+</div>
+
+{% include 'modal.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Live AQI alert
+(async()=>{
+  try{
+    const r=await fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=12.4244&longitude=75.7382&hourly=us_aqi&timezone=Asia%2FKolkata&forecast_days=1');
+    const d=await r.json();
+    const vals=d.hourly.us_aqi.filter(v=>v!==null);
+    const aqi=vals[vals.length-1];
+    const color=aqi<=50?'#2ecc71':aqi<=100?'#f39c12':aqi<=150?'#e67e22':'#e74c3c';
+    const label=aqi<=50?'Good':aqi<=100?'Moderate':aqi<=150?'Unhealthy':'Hazardous';
+
+    document.getElementById('aqiAlertBadge').textContent='AQI '+aqi;
+    document.getElementById('aqiAlertBadge').style.background=`${color}22`;
+    document.getElementById('aqiAlertBadge').style.color=color;
+    document.getElementById('aqiAlertStatus').textContent='● '+label;
+    document.getElementById('aqiAlertStatus').style.color=color;
+    document.getElementById('aqiAlertDesc').textContent=
+      `Current AQI is ${aqi} (${label}) at Madikeri monitoring station. `+
+      (aqi>100?'Outdoor activities not recommended for sensitive groups.':
+       aqi>50?'Air quality is acceptable for most people.':
+       'Air quality is excellent — great day for outdoor activities!');
+
+    // Change alert border color based on AQI
+    const alertEl=document.getElementById('aqiAlert');
+    alertEl.style.borderLeftColor=color;
+    alertEl.querySelector('.alert-icon').style.background=`${color}22`;
+  }catch(e){}
+})();
+</script>
+{% endblock %}

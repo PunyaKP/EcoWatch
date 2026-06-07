@@ -1,0 +1,316 @@
+{% extends 'base.html' %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block page_sub %}Platform configuration and preferences{% endblock %}
+{% block extra_css %}
+<style>
+.settings-layout{display:grid;grid-template-columns:220px 1fr;gap:16px}
+.settings-nav{background:rgba(12,30,15,.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px;height:fit-content}
+.s-nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:.85rem;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s;margin-bottom:2px}
+.s-nav-item:hover{background:rgba(46,204,113,.06);color:var(--text)}
+.s-nav-item.active{background:rgba(46,204,113,.12);color:var(--green);border-left:3px solid var(--green);padding-left:9px}
+.s-nav-item span{font-size:16px}
+
+.settings-content{display:flex;flex-direction:column;gap:14px}
+.s-card{background:rgba(12,30,15,.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden}
+.s-card-hdr{padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between}
+.s-card-hdr h3{font-size:.95rem;font-weight:600;color:var(--text)}
+.s-card-hdr p{font-size:.73rem;color:var(--muted);margin-top:2px}
+.s-card-body{padding:18px 20px}
+
+.s-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.s-row:last-child{border-bottom:none}
+.s-row-left strong{display:block;font-size:.85rem;font-weight:500;color:var(--text);margin-bottom:3px}
+.s-row-left span{font-size:.75rem;color:var(--muted)}
+
+.s-input{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:8px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:.85rem;outline:none;transition:all .2s;width:220px}
+.s-input:focus{border-color:rgba(46,204,113,.4);background:rgba(46,204,113,.04)}
+.s-select{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:8px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:.85rem;outline:none;width:180px;cursor:pointer}
+
+/* Toggle switch */
+.toggle-wrap{display:flex;align-items:center;gap:10px}
+.toggle{position:relative;width:44px;height:24px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:rgba(255,255,255,.1);border-radius:24px;transition:.3s;border:1px solid rgba(255,255,255,.1)}
+.toggle-slider::before{content:'';position:absolute;width:18px;height:18px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:.3s}
+.toggle input:checked+.toggle-slider{background:var(--green);border-color:var(--green)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(20px)}
+.toggle-lbl{font-size:.8rem;color:var(--muted)}
+
+.save-btn{background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;border:none;border-radius:9px;padding:9px 20px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;box-shadow:0 4px 12px rgba(46,204,113,.2)}
+.save-btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(46,204,113,.3)}
+
+.danger-btn{background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.2);color:#e74c3c;border-radius:9px;padding:9px 20px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+.danger-btn:hover{background:rgba(231,76,60,.2)}
+
+.s-badge{padding:3px 10px;border-radius:6px;font-size:.72rem;font-weight:600}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem}
+.info-row:last-child{border-bottom:none}
+.info-row .key{color:var(--muted)}
+.info-row .val{color:var(--text);font-weight:500}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-layout">
+
+  <!-- NAV -->
+  <div class="settings-nav">
+    <div class="s-nav-item active" onclick="showTab('profile',this)"><span>👤</span> Profile</div>
+    <div class="s-nav-item" onclick="showTab('platform',this)"><span>⚙</span> Platform</div>
+    <div class="s-nav-item" onclick="showTab('notifications',this)"><span>🔔</span> Notifications</div>
+    <div class="s-nav-item" onclick="showTab('integrations',this)"><span>🔗</span> Integrations</div>
+    <div class="s-nav-item" onclick="showTab('security',this)"><span>🛡</span> Security</div>
+    <div class="s-nav-item" onclick="showTab('system',this)"><span>💻</span> System Info</div>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06)">
+      <a href="/logout" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:.85rem;font-weight:500;color:#e74c3c;text-decoration:none;transition:all .2s;background:rgba(231,76,60,.06);border:1px solid rgba(231,76,60,.12)">
+        <span>🚪</span> Logout
+      </a>
+    </div>
+  </div>
+
+  <!-- CONTENT PANELS -->
+  <div class="settings-content">
+
+    <!-- PROFILE TAB -->
+    <div id="tab-profile">
+      <div class="s-card">
+        <div class="s-card-hdr">
+          <div><h3>👤 Profile Settings</h3><p>Manage your account information</p></div>
+          <button class="save-btn" onclick="showToast('✅ Profile saved!')">Save Changes</button>
+        </div>
+        <div class="s-card-body">
+          <!-- Avatar -->
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.05)">
+            <div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#2ecc71,#27ae60);display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:700;color:#fff">{{ username[0]|upper if username else 'A' }}</div>
+            <div>
+              <div style="font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:3px">{{ username or 'Admin' }}</div>
+              <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px">{{ role or 'Administrator' }}</div>
+              <button style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 12px;font-size:.75rem;color:var(--text);cursor:pointer;font-family:'Inter',sans-serif">Change Avatar</button>
+            </div>
+          </div>
+          <div class="s-row">
+            <div class="s-row-left"><strong>Full Name</strong><span>Your display name</span></div>
+            <input class="s-input" value="{{ username or 'Admin' }}"/>
+          </div>
+          <div class="s-row">
+            <div class="s-row-left"><strong>Email</strong><span>Your email address</span></div>
+            <input class="s-input" value="admin@ecowatch.in"/>
+          </div>
+          <div class="s-row">
+            <div class="s-row-left"><strong>Role</strong><span>Your platform role</span></div>
+            <span class="s-badge" style="background:rgba(46,204,113,.1);color:#2ecc71;border:1px solid rgba(46,204,113,.2)">{{ role or 'Administrator' }}</span>
+          </div>
+          <div class="s-row">
+            <div class="s-row-left"><strong>Location</strong><span>Your monitoring region</span></div>
+            <input class="s-input" value="Kodagu, Karnataka"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLATFORM TAB -->
+    <div id="tab-platform" style="display:none">
+      <div class="s-card">
+        <div class="s-card-hdr">
+          <div><h3>⚙ Platform Settings</h3><p>Configure EcoWatch behavior</p></div>
+          <button class="save-btn" onclick="showToast('✅ Platform settings saved!')">Save</button>
+        </div>
+        <div class="s-card-body">
+          <div class="s-row">
+            <div class="s-row-left"><strong>Monitoring Region</strong><span>Primary area of focus</span></div>
+            <input class="s-input" value="Kodagu, Karnataka, India"/>
+          </div>
+          <div class="s-row">
+            <div class="s-row-left"><strong>AQI Data Source</strong><span>Live air quality provider</span></div>
+            <select class="s-select">
+              <option selected>Open-Meteo API</option>
+              <option>OpenWeatherMap</option>
+              <option>CPCB India</option>
+            </select>
+          </div>
+          <div class="s-row">
+            <div class="s-row-left"><strong>Map Default Zoom</strong><span>Initial map zoom level</span></div>
+            <select class="s-select">
+              <option>8 — District view</option>
+              <option selected>10 — Taluk view</option>
+              <option>12 — City view</option>
+            </select>
+          </div>
+          <div class="s-row">
+            <div class="s-row-left"><strong>Report Auto-Resolve</strong><span>Auto resolve after days</span></div>
+            <select class="s-select">
+              <option>Never</option>
+              <option>7 days</option>
+              <option selected>30 days</option>
+              <option>90 days</option>
+            </select>
+          </div>
+          <div class="s-row">
+            <div class="s-row-left"><strong>Data Refresh Rate</strong><span>How often to fetch live data</span></div>
+            <select class="s-select">
+              <option>1 minute</option>
+              <option selected>5 minutes</option>
+              <option>15 minutes</option>
+              <option>30 minutes</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS TAB -->
+    <div id="tab-notifications" style="display:none">
+      <div class="s-card">
+        <div class="s-card-hdr">
+          <div><h3>🔔 Notification Settings</h3><p>Control when you get alerted</p></div>
+          <button class="save-btn" onclick="showToast('✅ Notification settings saved!')">Save</button>
+        </div>
+        <div class="s-card-body">
+          {% for label, desc, checked in [
+            ('Critical Alerts', 'Get notified for critical reports', true),
+            ('High Priority Reports', 'Alerts for high priority issues', true),
+            ('New Report Submitted', 'When any report is submitted', false),
+            ('AQI Threshold Alert', 'When AQI exceeds 100', true),
+            ('Daily Summary', 'Daily environmental report email', false),
+            ('System Updates', 'Platform maintenance notifications', true),
+          ] %}
+          <div class="s-row">
+            <div class="s-row-left"><strong>{{ label }}</strong><span>{{ desc }}</span></div>
+            <label class="toggle">
+              <input type="checkbox" {% if checked %}checked{% endif %}/>
+              <div class="toggle-slider"></div>
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- INTEGRATIONS TAB -->
+    <div id="tab-integrations" style="display:none">
+      <div class="s-card">
+        <div class="s-card-hdr">
+          <div><h3>🔗 Integrations</h3><p>Connected services and APIs</p></div>
+        </div>
+        <div class="s-card-body">
+          {% for name, desc, status, color, icon in [
+            ('GitHub', 'Repository — ecowatch-kodagu', 'Connected', '#2ecc71', '🐙'),
+            ('Jenkins', 'CI/CD Pipeline — Build #1256', 'Online', '#2ecc71', '🤖'),
+            ('Docker', 'Container Registry — 12 active', 'Running', '#2ecc71', '🐳'),
+            ('AWS', 'EC2 + S3 + RDS — US East', 'Healthy', '#2ecc71', '☁'),
+            ('Open-Meteo', 'Weather & AQI API — Free tier', 'Connected', '#2ecc71', '🌤'),
+            ('OpenWeatherMap', 'Backup weather API', 'Not Connected', '#e74c3c', '🌦'),
+          ] %}
+          <div class="s-row">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:1.3rem">{{ icon }}</span>
+              <div class="s-row-left">
+                <strong>{{ name }}</strong>
+                <span>{{ desc }}</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="s-badge"style="background:{{ color }}22;color:{{ color }};border:1px solid {{ color }}44">● {{ status }}</span>
+              <button style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:5px 12px;font-size:.73rem;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif">Configure</button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- SECURITY TAB -->
+    <div id="tab-security" style="display:none">
+      <div class="s-card">
+        <div class="s-card-hdr">
+          <div><h3>🛡 Security Settings</h3><p>Manage access and authentication</p></div>
+        </div>
+        <div class="s-card-body">
+          <div class="s-row">
+            <div class="s-row-left"><strong>Change Password</strong><span>Update your login password</span></div>
+            <button class="save-btn" onclick="showToast('🔑 Password change coming soon!')">Change Password</button>
+          </div>
+          <div class="s-row">
+            <div class="s-row-left"><strong>Two Factor Auth</strong><span>Extra security for your account</span></div>
+            <label class="toggle"><input type="checkbox"/><div class="toggle-slider"></div></label>
+          </div>
+          <div class="s-row">
+            <div class="s-row-left"><strong>Session Timeout</strong><span>Auto logout after inactivity</span></div>
+            <select class="s-select">
+              <option>30 minutes</option>
+              <option selected>1 hour</option>
+              <option>4 hours</option>
+              <option>Never</option>
+            </select>
+          </div>
+          <div class="s-row">
+            <div class="s-row-left"><strong>Login History</strong><span>Last login: Today</span></div>
+            <button style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:7px 14px;font-size:.78rem;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif">View History</button>
+          </div>
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.05)">
+            <button class="danger-btn" onclick="if(confirm('Are you sure?'))window.location='/logout'">🚪 Logout All Sessions</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SYSTEM INFO TAB -->
+    <div id="tab-system" style="display:none">
+      <div class="s-card">
+        <div class="s-card-hdr">
+          <div><h3>💻 System Information</h3><p>Platform and deployment details</p></div>
+        </div>
+        <div class="s-card-body">
+          {% for key, val in [
+            ('Platform', 'EcoWatch v1.0.0'),
+            ('Framework', 'Python Flask'),
+            ('Database', 'JSON File Store'),
+            ('Region', 'Kodagu, Karnataka, India'),
+            ('AQI Source', 'Open-Meteo API (Free, No Key)'),
+            ('Map Provider', 'CartoDB Dark Matter'),
+            ('Deployment', 'AWS EC2 + Docker + Jenkins'),
+            ('Container', 'Docker 24.x'),
+            ('CI/CD', 'Jenkins Pipeline'),
+            ('Repository', 'GitHub — ecowatch-kodagu'),
+            ('Python Version', '3.11+'),
+            ('Last Deploy', 'Jun 7, 2026'),
+          ] %}
+          <div class="info-row">
+            <span class="key">{{ key }}</span>
+            <span class="val">{{ val }}</span>
+          </div>
+          {% endfor %}
+
+          <div style="margin-top:16px;padding:14px;background:rgba(46,204,113,.06);border:1px solid rgba(46,204,113,.15);border-radius:10px">
+            <div style="display:flex;align-items:center;gap:8px;font-size:.82rem">
+              <div style="width:8px;height:8px;border-radius:50%;background:#2ecc71;animation:blink 2s infinite"></div>
+              <span style="color:#2ecc71;font-weight:600">All Systems Operational</span>
+            </div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:4px">Last checked: just now</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showTab(name,el){
+  // Hide all tabs
+  ['profile','platform','notifications','integrations','security','system'].forEach(t=>{
+    const tab=document.getElementById('tab-'+t);
+    if(tab)tab.style.display='none';
+  });
+  // Remove active from all nav items
+  document.querySelectorAll('.s-nav-item').forEach(i=>i.classList.remove('active'));
+  // Show selected
+  const selected=document.getElementById('tab-'+name);
+  if(selected)selected.style.display='block';
+  el.classList.add('active');
+}
+</script>
+{% endblock %}

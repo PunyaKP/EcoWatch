@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% block title %}Map View{% endblock %}
+{% block page_title %}Map View{% endblock %}
+{% block page_sub %}Live environmental hotspots — Kodagu district{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+.map-layout{display:grid;grid-template-columns:1fr 280px;gap:16px;height:calc(100vh - 140px)}
+#fullMap{height:100%;border-radius:16px;overflow:hidden}
+.map-sidebar{display:flex;flex-direction:column;gap:14px;overflow-y:auto}
+.map-sidebar::-webkit-scrollbar{width:3px}
+.map-sidebar::-webkit-scrollbar-thumb{background:rgba(46,204,113,.2)}
+.ms-card{background:rgba(12,30,15,.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px}
+.ms-card h3{font-size:.88rem;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.loc-item{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.8rem;cursor:pointer;transition:all .2s}
+.loc-item:last-child{border-bottom:none}
+.loc-item:hover{padding-left:4px}
+.loc-name{font-weight:500;color:var(--text)}
+.loc-sub{font-size:.7rem;color:var(--muted);margin-top:2px}
+.aqi-pill{padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:700}
+.filter-btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.filter-btn{padding:5px 12px;border-radius:8px;font-size:.75rem;font-weight:500;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--muted);transition:all .2s;font-family:'Inter',sans-serif}
+.filter-btn.active{background:rgba(46,204,113,.12);border-color:rgba(46,204,113,.3);color:var(--green)}
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.stat-mini{background:rgba(12,30,15,.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;text-align:center}
+.stat-mini .val{font-size:1.5rem;font-weight:700;line-height:1;margin-bottom:3px}
+.stat-mini .lbl{font-size:.7rem;color:var(--muted)}
+.report-pin{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.78rem}
+.report-pin:last-child{border-bottom:none}
+.pin-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.pin-info strong{display:block;color:var(--text);font-size:.8rem}
+.pin-info span{color:var(--muted);font-size:.72rem}
+.pin-badge{margin-left:auto;padding:2px 7px;border-radius:5px;font-size:.68rem;font-weight:700;flex-shrink:0}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- FILTER BUTTONS -->
+<div class="filter-btns">
+  <button class="filter-btn active" onclick="filterMap('all',this)">🌍 All Issues</button>
+  <button class="filter-btn" onclick="filterMap('air',this)">💨 Air Pollution</button>
+  <button class="filter-btn" onclick="filterMap('water',this)">💧 Water Quality</button>
+  <button class="filter-btn" onclick="filterMap('waste',this)">🗑 Waste</button>
+  <button class="filter-btn" onclick="filterMap('forest',this)">🌳 Deforestation</button>
+</div>
+
+<!-- STAT MINI CARDS -->
+<div class="stat-row">
+  <div class="stat-mini">
+    <div class="val" id="mapAqi" style="color:#2ecc71">--</div>
+    <div class="lbl">Live AQI</div>
+  </div>
+  <div class="stat-mini">
+    <div class="val" id="mapTemp" style="color:#f39c12">--°C</div>
+    <div class="lbl">Temperature</div>
+  </div>
+  <div class="stat-mini">
+    <div class="val" id="mapHum" style="color:#3498db">--%</div>
+    <div class="lbl">Humidity</div>
+  </div>
+  <div class="stat-mini">
+    <div class="val" style="color:#e74c3c">{{ reports|selectattr('status','equalto','Critical')|list|length }}</div>
+    <div class="lbl">Critical Alerts</div>
+  </div>
+</div>
+
+<!-- MAP + SIDEBAR -->
+<div class="map-layout">
+  <!-- MAP -->
+  <div style="position:relative;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.08)">
+    <div id="fullMap"></div>
+    <!-- Map overlay info -->
+    <div style="position:absolute;top:12px;left:12px;z-index:1000;background:rgba(8,22,10,.88);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;font-size:.78rem">
+      <div style="color:var(--green);font-weight:600;margin-bottom:4px">📍 Kodagu, Karnataka</div>
+      <div style="color:var(--muted)">Live environmental monitoring</div>
+    </div>
+    <!-- Legend -->
+    <div style="position:absolute;bottom:20px;right:12px;z-index:1000;background:rgba(8,22,10,.88);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;font-size:.75rem">
+      <div style="font-weight:600;color:var(--text);margin-bottom:8px">AQI Legend</div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;align-items:center;gap:7px"><div style="width:10px;height:10px;border-radius:50%;background:#2ecc71"></div>0–50 Good</div>
+        <div style="display:flex;align-items:center;gap:7px"><div style="width:10px;height:10px;border-radius:50%;background:#f39c12"></div>51–100 Moderate</div>
+        <div style="display:flex;align-items:center;gap:7px"><div style="width:10px;height:10px;border-radius:50%;background:#e67e22"></div>101–150 Unhealthy</div>
+        <div style="display:flex;align-items:center;gap:7px"><div style="width:10px;height:10px;border-radius:50%;background:#e74c3c"></div>151+ Hazardous</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="map-sidebar">
+    <!-- AQI Locations -->
+    <div class="ms-card">
+      <h3>📡 Live AQI Stations</h3>
+      <div id="locList">
+        <div style="color:var(--muted);font-size:.8rem">Loading live data…</div>
+      </div>
+    </div>
+
+    <!-- Submitted Reports on Map -->
+    <div class="ms-card">
+      <h3>📋 Reported Issues</h3>
+      {% if reports %}
+        {% for r in reports[:6] %}
+        <div class="report-pin">
+          <div class="pin-dot"style="background:{% if r.status=='Critical' %}#e74c3c{% elif r.status=='High' %}#f39c12{% elif r.status=='Medium' %}#3498db{% else %}#2ecc71{% endif %}"></div>
+          <div class="pin-info">
+            <strong>{{ r.issue }}</strong>
+            <span>{{ r.location }} · {{ r.time }}</span>
+          </div>
+          <span class="pin-badge"style="{% if r.status=='Critical' %}background:rgba(231,76,60,.15);color:#e74c3c{% elif r.status=='High' %}background:rgba(243,156,18,.15);color:#f39c12{% elif r.status=='Medium' %}background:rgba(52,152,219,.15);color:#3498db{% else %}background:rgba(46,204,113,.12);color:#2ecc71{% endif %}">{{ r.status }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="color:var(--muted);font-size:.8rem;padding:10px 0">No reports submitted yet</div>
+      {% endif %}
+    </div>
+
+    <!-- Weather -->
+    <div class="ms-card">
+      <h3>🌤 Live Weather</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:.8rem" id="weatherInfo">
+        <div style="color:var(--muted)">Loading…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include 'modal.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const aqiColor=v=>v<=50?'#2ecc71':v<=100?'#f39c12':v<=150?'#e67e22':'#e74c3c';
+const aqiLabel=v=>v<=50?'Good':v<=100?'Moderate':v<=150?'Unhealthy':'Hazardous';
+
+// Init Map
+const map=L.map('fullMap',{
+  center:[12.42,75.82],
+  zoom:10,
+  zoomControl:true,
+  attributionControl:false
+});
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);
+
+// Kodagu boundary
+L.circle([12.4244,75.7382],{
+  radius:35000,
+  color:'#2ecc71',
+  fillColor:'#2ecc71',
+  fillOpacity:.04,
+  weight:1.5,
+  dashArray:'6,8'
+}).addTo(map);
+
+// AQI Stations
+const LOCS=[
+  {name:'Madikeri',sub:'District HQ',lat:12.4244,lng:75.7382},
+  {name:'Virajpet',sub:'Taluk center',lat:12.196,lng:75.808},
+  {name:'Somwarpet',sub:'Coffee region',lat:12.5962,lng:75.9629},
+  {name:'Kushalnagar',sub:'Cauvery zone',lat:12.458,lng:75.962},
+  {name:'Gonikoppal',sub:'South Kodagu',lat:12.169,lng:75.932},
+];
+
+let allMarkers=[];
+let reportMarkers=[];
+
+async function loadAQI(){
+  const locList=document.getElementById('locList');
+  locList.innerHTML='';
+  const results=await Promise.all(LOCS.map(async l=>{
+    try{
+      const r=await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${l.lat}&longitude=${l.lng}&hourly=us_aqi&timezone=Asia%2FKolkata&forecast_days=1`);
+      const d=await r.json();
+      const v=d.hourly.us_aqi.filter(v=>v!==null);
+      return{...l,aqi:v[v.length-1]||20};
+    }catch{return{...l,aqi:20};}
+  }));
+
+  // Update main AQI display
+  if(results[0]){
+    const c=aqiColor(results[0].aqi);
+    document.getElementById('mapAqi').textContent=results[0].aqi;
+    document.getElementById('mapAqi').style.color=c;
+  }
+
+  // Add markers to map
+  results.forEach(loc=>{
+    const c=aqiColor(loc.aqi);
+    const sz=loc.aqi>150?56:loc.aqi>100?48:loc.aqi>50?40:34;
+    const icon=L.divIcon({
+      className:'',
+      html:`<div style="width:${sz}px;height:${sz}px;background:radial-gradient(circle,${c}cc,${c}44);border-radius:50%;border:2px solid ${c};box-shadow:0 0 20px ${c}66,0 0 40px ${c}22;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;font-family:Inter,sans-serif;cursor:pointer">${loc.aqi}</div>`,
+      iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]
+    });
+    const m=L.marker([loc.lat,loc.lng],{icon}).addTo(map)
+      .bindPopup(`
+        <div style="font-family:Inter,sans-serif;min-width:160px">
+          <strong style="font-size:13px;color:#fff">${loc.name}</strong>
+          <div style="font-size:.75rem;color:#888;margin-bottom:8px">${loc.sub}</div>
+          <div style="color:${c};font-size:24px;font-weight:700;line-height:1">${loc.aqi}</div>
+          <div style="font-size:11px;color:#888;margin-bottom:6px">AQI · ${aqiLabel(loc.aqi)}</div>
+          <div style="background:${c}22;border:1px solid ${c}44;border-radius:6px;padding:4px 8px;font-size:11px;color:${c}">${aqiLabel(loc.aqi)}</div>
+        </div>`);
+    allMarkers.push({marker:m,type:'aqi',loc});
+
+    // Sidebar list
+    const item=document.createElement('div');
+    item.className='loc-item';
+    item.innerHTML=`
+      <div>
+        <div class="loc-name">${loc.name}</div>
+        <div class="loc-sub">${loc.sub}</div>
+      </div>
+      <span class="aqi-pill" style="background:${c}22;color:${c};border:1px solid ${c}44">${loc.aqi}</span>`;
+    item.onclick=()=>{map.setView([loc.lat,loc.lng],13);m.openPopup();};
+    locList.appendChild(item);
+  });
+}
+
+// Add report markers from submitted reports
+const reports = {{ reports | tojson | safe }};
+reports.forEach(r=>{
+  const colors={Critical:'#e74c3c',High:'#f39c12',Medium:'#3498db',Low:'#2ecc71'};
+  const c=colors[r.status]||'#2ecc71';
+  const lat=12.4244+(Math.random()*.2-.1);
+  const lng=75.7382+(Math.random()*.2-.1);
+  const icon=L.divIcon({
+    className:'',
+    html:`<div style="width:28px;height:28px;background:${c}cc;border-radius:50%;border:2px solid ${c};box-shadow:0 0 12px ${c}88;display:flex;align-items:center;justify-content:center;font-size:12px">⚠</div>`,
+    iconSize:[28,28],iconAnchor:[14,14]
+  });
+  const m=L.marker([lat,lng],{icon}).addTo(map)
+    .bindPopup(`
+      <div style="font-family:Inter,sans-serif;min-width:160px">
+        <strong style="color:#fff">${r.issue}</strong><br>
+        <span style="color:#888;font-size:11px">📍 ${r.location}</span><br>
+        <span style="color:#888;font-size:11px">🕐 ${r.time}</span><br>
+        <span style="color:${c};font-size:11px;font-weight:600">● ${r.status}</span>
+        ${r.img?`<br><img src="${r.img}" style="width:100%;max-height:80px;object-fit:cover;border-radius:6px;margin-top:6px">`:''}
+      </div>`);
+  reportMarkers.push({marker:m,type:r.issue.toLowerCase()});
+});
+
+// Filter function
+function filterMap(type,btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  reportMarkers.forEach(({marker,type:t})=>{
+    if(type==='all'){marker.addTo(map);}
+    else if(type==='air'&&t.includes('air')){marker.addTo(map);}
+    else if(type==='water'&&t.includes('water')){marker.addTo(map);}
+    else if(type==='waste'&&(t.includes('dump')||t.includes('waste'))){marker.addTo(map);}
+    else if(type==='forest'&&t.includes('deforest')){marker.addTo(map);}
+    else{map.removeLayer(marker);}
+  });
+}
+
+// Live weather
+async function loadWeather(){
+  try{
+    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=12.4244&longitude=75.7382&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weathercode&timezone=Asia%2FKolkata');
+    const d=await r.json();
+    const w=d.current;
+    const temp=Math.round(w.temperature_2m);
+    const hum=w.relative_humidity_2m;
+    const wind=Math.round(w.wind_speed_10m);
+    document.getElementById('mapTemp').textContent=temp+'°C';
+    document.getElementById('mapHum').textContent=hum+'%';
+    document.getElementById('weatherInfo').innerHTML=`
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+        <span style="color:var(--muted)">🌡 Temperature</span>
+        <span style="font-weight:600;color:#f39c12">${temp}°C</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+        <span style="color:var(--muted)">💧 Humidity</span>
+        <span style="font-weight:600;color:#3498db">${hum}%</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+        <span style="color:var(--muted)">🌬 Wind Speed</span>
+        <span style="font-weight:600;color:#9b59b6">${wind} km/h</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0">
+        <span style="color:var(--muted)">📍 Location</span>
+        <span style="font-weight:600;color:#2ecc71">Kodagu</span>
+      </div>`;
+  }catch(e){}
+}
+
+// Init
+loadAQI();
+loadWeather();
+</script>
+{% endblock %}
