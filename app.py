@@ -128,6 +128,10 @@ def get_stats():
 
 # ── ROUTES ──────────────────────────────────────
 
+@app.route("/health")
+def health():
+    return {"status": "healthy"}
+
 @app.route('/')
 def index():
     return redirect(url_for('login'))
