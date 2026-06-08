@@ -9,16 +9,12 @@ import boto3
 from botocore.exceptions import NoCredentialsError
 
 # AWS S3 Config
-AWS_ACCESS_KEY = 'YOUR_ACCESS_KEY'
-AWS_SECRET_KEY = 'YOUR_SECRET_KEY'
-AWS_BUCKET = 'ecowatch-kodagu'
+AWS_BUCKET = 'ecowatch-uploads-2026'
 AWS_REGION = 'ap-south-1'
 
 s3 = boto3.client(
     's3',
-    aws_access_key_id=AWS_ACCESS_KEY,
-    aws_secret_access_key=AWS_SECRET_KEY,
-    region_name=AWS_REGION
+    region_name='ap-south-1'
 )
 
 def upload_to_s3(file, filename):
@@ -61,8 +57,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'heic', 'webp'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Real users database
-USERS = {
+DEFAULT_USERS = {
     'admin': {
         'password': 'ecowatch123',
         'name': 'Punya',
@@ -74,6 +69,14 @@ USERS = {
         'role': 'Eco Warrior'
     }
 }
+
+def load_users():
+    if os.path.exists('users.json'):
+        with open('users.json', 'r') as f:
+            return json.load(f)
+    return DEFAULT_USERS.copy()
+
+USERS = load_users()
 
 # Seed reports data
 def load_reports():
@@ -207,28 +210,17 @@ def submit_report():
         'Low': 'Low'
     }
     status = status_map.get(severity, 'Medium')
-
-    img_url = ''
-    if 'photo' in request.files:
-        photo = request.files['photo']
-        if photo and photo.filename != '' and allowed_file(photo.filename):
-            filename = secure_filename(photo.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            photo.save(filepath)
-            img_url = '/static/uploads/' + filename
-
-    now = datetime.now().strftime('%b %d, %Y %I:%M %p')
-    
+      
     new_report = {
-        "issue": issue,
-        "location": location,
-        "description": description,
-        "risk_score": risk_score,
-        "status": status,
-        "time": now,
-        "img": img_url
+    "issue": issue,
+    "location": location,
+    "description": description,
+    "risk_score": risk_score,
+    "status": status,
+    "time": now,
+    "img": img_url
     }
-    
+
     reports.insert(0, new_report)
     save_reports()
 
@@ -296,8 +288,14 @@ def ai_insights():
 def users():
     if 'user' not in session:
         return redirect(url_for('login'))
+    stats = get_stats()
     return render_template('users.html',
-        username=session.get('name'))
+        username=session.get('name'),
+        role=session.get('role'),
+        extra_users=USERS,
+        reports=reports,
+        total_user_reports=stats['total'],
+        critical_count=stats['critical'])
 
 @app.route('/settings')
 def settings():
@@ -313,5 +311,26 @@ def resolve_report(index):
         reports.pop(index)
         save_reports()
     return redirect(url_for('reports_page'))
+@app.route('/add-user', methods=['POST'])
+def add_user():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    
+    name = request.form.get('name', '')
+    username = request.form.get('username', '').lower()
+    password = request.form.get('password', '')
+    role = request.form.get('role', 'Eco Warrior')
+    
+    if username and password:
+        USERS[username] = {
+            'password': password,
+            'name': name,
+            'role': role
+        }
+        # Save to file permanently
+        with open('users.json', 'w') as f:
+            json.dump(USERS, f, indent=2)
+    
+    return redirect(url_for('users'))
 if __name__ == '__main__':
     app.run(debug=True)

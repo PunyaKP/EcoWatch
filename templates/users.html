@@ -11,14 +11,12 @@
 .u-stat .icon{font-size:1.5rem;margin-bottom:8px}
 .u-stat .val{font-size:2rem;font-weight:700;line-height:1;margin-bottom:4px}
 .u-stat .lbl{font-size:.75rem;color:var(--muted)}
-
 .users-card{background:rgba(12,30,15,.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;margin-bottom:16px}
 .users-hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.05)}
 .users-hdr h3{font-size:.95rem;font-weight:600;color:var(--text)}
 .add-user-btn{background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;border:none;border-radius:9px;padding:8px 16px;font-size:.82rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:'Inter',sans-serif;transition:all .2s}
 .add-user-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(46,204,113,.3)}
-
-.user-row{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s}
+.user-row{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;flex-wrap:wrap}
 .user-row:last-child{border-bottom:none}
 .user-row:hover{background:rgba(46,204,113,.03)}
 .user-avatar{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem;color:#fff;flex-shrink:0}
@@ -31,7 +29,6 @@
 .u-btn{padding:5px 12px;border-radius:7px;font-size:.75rem;font-weight:500;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--muted);transition:all .2s;font-family:'Inter',sans-serif}
 .u-btn:hover{background:rgba(255,255,255,.1);color:var(--text)}
 .u-btn.danger:hover{background:rgba(231,76,60,.12);border-color:rgba(231,76,60,.2);color:#e74c3c}
-
 .activity-card{background:rgba(12,30,15,.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:20px}
 .activity-hdr{font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:14px}
 .activity-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)}
@@ -40,8 +37,6 @@
 .act-body strong{display:block;font-size:.8rem;font-weight:500;color:var(--text)}
 .act-body span{font-size:.72rem;color:var(--muted)}
 .act-time{font-size:.7rem;color:var(--muted);margin-left:auto;white-space:nowrap}
-
-/* Add user modal */
 .add-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center}
 .add-modal.open{display:flex}
 .add-modal-box{background:rgba(10,25,12,.95);backdrop-filter:blur(32px);border:1px solid rgba(46,204,113,.2);border-radius:22px;padding:32px;width:420px;max-width:92vw;box-shadow:0 40px 80px rgba(0,0,0,.6);animation:modalIn .3s cubic-bezier(.22,1,.36,1)}
@@ -59,7 +54,7 @@
 <div class="users-stats">
   <div class="u-stat">
     <div class="icon">👥</div>
-    <div class="val" style="color:#2ecc71">2</div>
+    <div class="val" style="color:#2ecc71" id="totalUsers">2</div>
     <div class="lbl">Total Users</div>
   </div>
   <div class="u-stat">
@@ -88,7 +83,7 @@
     </button>
   </div>
 
-  <!-- Admin User -->
+  <!-- Admin -->
   <div class="user-row">
     <div class="user-avatar" style="background:linear-gradient(135deg,#2ecc71,#27ae60)">P</div>
     <div class="user-info">
@@ -106,7 +101,7 @@
     </div>
   </div>
 
-  <!-- Aarav User -->
+  <!-- Aarav -->
   <div class="user-row">
     <div class="user-avatar" style="background:linear-gradient(135deg,#3498db,#2980b9)">A</div>
     <div class="user-info">
@@ -124,6 +119,29 @@
       <button class="u-btn danger">🗑 Remove</button>
     </div>
   </div>
+
+  <!-- Dynamic users from users.json -->
+  {% for uname, udata in extra_users.items() %}
+  {% if uname not in ['admin', 'aarav'] %}
+  <div class="user-row">
+    <div class="user-avatar" style="background:linear-gradient(135deg,#9b59b6,#8e44ad)">{{ udata.name[0]|upper }}</div>
+    <div class="user-info">
+      <strong>{{ udata.name }}</strong>
+      <span>{{ uname }}@ecowatch.in · {{ uname }}</span>
+    </div>
+    <span class="user-role" style="background:rgba(155,89,182,.1);color:#9b59b6;border:1px solid rgba(155,89,182,.2)">{{ udata.role }}</span>
+    <div class="user-status" style="color:#2ecc71;margin-left:16px">
+      <div class="status-dot" style="background:#2ecc71"></div> Active
+    </div>
+    <div class="user-actions">
+      <button class="u-btn">✏ Edit</button>
+      <form method="POST" action="/delete-user/{{ uname }}" style="display:inline">
+        <button type="submit" class="u-btn danger">🗑 Remove</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
 </div>
 
 <!-- BOTTOM GRID -->
@@ -135,12 +153,16 @@
     {% if reports %}
       {% for r in reports[:5] %}
       <div class="activity-item">
-        <div class="act-icon"style="background:{% if r.status=='Critical' %}rgba(231,76,60,.12){% elif r.status=='High' %}rgba(243,156,18,.12){% else %}rgba(46,204,113,.1){% endif %}">
-          {% if r.issue=='Air Pollution' %}💨{% elif r.issue=='Water Contamination' %}💧{% elif r.issue=='Illegal Dumping' %}🗑{% elif r.issue=='Deforestation' %}🌳{% else %}⚠{% endif %}
+        <div class="act-icon" style="background:{% if r.status=='Critical' %}rgba(231,76,60,.12){% elif r.status=='High' %}rgba(243,156,18,.12){% else %}rgba(46,204,113,.1){% endif %}">
+          {% if r.issue=='Air Pollution' %}💨
+          {% elif r.issue=='Water Contamination' %}💧
+          {% elif r.issue=='Illegal Dumping' %}🗑
+          {% elif r.issue=='Deforestation' %}🌳
+          {% else %}⚠{% endif %}
         </div>
         <div class="act-body">
-          <strong>Report submitted — {{ r.issue }}</strong>
-          <span>{{ r.location }}</span>
+          <strong>{{ r.issue }} — {{ r.location }}</strong>
+          <span>Reported · {{ r.status }}</span>
         </div>
         <span class="act-time">{{ r.time }}</span>
       </div>
@@ -155,15 +177,14 @@
     <div class="activity-hdr">🛡 Role Permissions</div>
     {% for role, perms in [
       ('Administrator', ['View Dashboard', 'Submit Reports', 'Resolve Reports', 'Manage Users', 'View Analytics', 'System Settings']),
-      ('Eco Warrior', ['View Dashboard', 'Submit Reports', 'View Analytics'])
+      ('Eco Warrior', ['View Dashboard', 'Submit Reports', 'View Analytics']),
+      ('Viewer', ['View Dashboard', 'View Analytics'])
     ] %}
-    <div style="margin-bottom:16px">
-      <div style="font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:8px">
-        {% if role=='Administrator' %}
-          <span style="color:#2ecc71">👑 {{ role }}</span>
-        {% else %}
-          <span style="color:#3498db">🌿 {{ role }}</span>
-        {% endif %}
+    <div style="margin-bottom:14px">
+      <div style="font-size:.82rem;font-weight:600;margin-bottom:6px">
+        {% if role=='Administrator' %}<span style="color:#2ecc71">👑 {{ role }}</span>
+        {% elif role=='Eco Warrior' %}<span style="color:#3498db">🌿 {{ role }}</span>
+        {% else %}<span style="color:#9b59b6">👁 {{ role }}</span>{% endif %}
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">
         {% for perm in perms %}
@@ -181,34 +202,36 @@
   <div class="add-modal-box">
     <h2 style="font-size:1.2rem;font-weight:700;color:#2ecc71;margin-bottom:4px">➕ Add New User</h2>
     <p style="font-size:.82rem;color:var(--muted);margin-bottom:20px">Add a new user to EcoWatch platform</p>
-    <div class="m-field">
-      <label>Full Name</label>
-      <input type="text" placeholder="e.g. Rahul Kumar"/>
-    </div>
-    <div class="m-field">
-      <label>Username</label>
-      <input type="text" placeholder="e.g. rahul"/>
-    </div>
-    <div class="m-field">
-      <label>Email</label>
-      <input type="email" placeholder="e.g. rahul@ecowatch.in"/>
-    </div>
-    <div class="m-field">
-      <label>Password</label>
-      <input type="password" placeholder="••••••••"/>
-    </div>
-    <div class="m-field">
-      <label>Role</label>
-      <select>
-        <option>Eco Warrior</option>
-        <option>Administrator</option>
-        <option>Viewer</option>
-      </select>
-    </div>
-    <div style="display:flex;gap:10px;margin-top:16px">
-      <button style="flex:1;background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;border:none;border-radius:10px;padding:12px;font-weight:600;font-size:.92rem;cursor:pointer;font-family:'Inter',sans-serif" onclick="alert('User added! Connect to database to make this permanent.')">Add User</button>
-      <button style="flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;color:var(--text);cursor:pointer;font-family:'Inter',sans-serif" onclick="document.getElementById('addModal').classList.remove('open')">Cancel</button>
-    </div>
+    <form method="POST" action="/add-user">
+      <div class="m-field">
+        <label>Full Name</label>
+        <input type="text" name="name" placeholder="e.g. Rahul Kumar" required/>
+      </div>
+      <div class="m-field">
+        <label>Username</label>
+        <input type="text" name="username" placeholder="e.g. rahul" required/>
+      </div>
+      <div class="m-field">
+        <label>Email</label>
+        <input type="email" name="email" placeholder="e.g. rahul@ecowatch.in"/>
+      </div>
+      <div class="m-field">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="••••••••" required/>
+      </div>
+      <div class="m-field">
+        <label>Role</label>
+        <select name="role">
+          <option>Eco Warrior</option>
+          <option>Administrator</option>
+          <option>Viewer</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button type="submit" style="flex:1;background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;border:none;border-radius:10px;padding:12px;font-weight:600;font-size:.92rem;cursor:pointer;font-family:'Inter',sans-serif">Add User</button>
+        <button type="button" style="flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;color:var(--text);cursor:pointer;font-family:'Inter',sans-serif" onclick="document.getElementById('addModal').classList.remove('open')">Cancel</button>
+      </div>
+    </form>
   </div>
 </div>
 

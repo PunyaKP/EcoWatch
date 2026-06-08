@@ -1,0 +1,17 @@
+{
+  "admin": {
+    "password": "ecowatch123",
+    "name": "Punya",
+    "role": "Administrator"
+  },
+  "aarav": {
+    "password": "kodagu2024",
+    "name": "Aarav Mehta",
+    "role": "Eco Warrior"
+  },
+  "poojith": {
+    "password": "poojith24",
+    "name": "Poojith K P",
+    "role": "Eco Warrior"
+  }
+}
